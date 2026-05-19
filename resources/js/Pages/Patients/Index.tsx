@@ -1,12 +1,32 @@
 import DashboardLayout from "../../Layouts/DashboardLayout";
 import { Patient } from "../../types/patient";
-import { Link } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
 
 type Props = {
-    patients: Patient[];
+    patients: {
+        data: Patient[];
+
+        links: any[];
+    };
+
+    filters: {
+        search: string;
+    };
 };
 
-export default function Index({ patients }: Props) {
+function handleDelete(id: number) {
+
+    if (confirm("Delete this patient?")) {
+
+        router.delete(`/patients/${id}`);
+
+    }
+}
+
+export default function Index({
+    patients,
+    filters,
+}: Props) {
     return (
         <DashboardLayout>
 
@@ -18,10 +38,33 @@ export default function Index({ patients }: Props) {
 
                 <Link
                     href="/patients/create"
-                    className="bg-red-600 text-black px-4 py-2 rounded border border-black"
+                    className="bg-blue-600 text-white px-4 py-2 rounded border border-black"
                 >
                     Add Patient
                 </Link>
+
+            </div>
+
+            <div className="mb-4">
+
+                <input
+                    type="text"
+                    placeholder="Search patient..."
+                    defaultValue={filters.search}
+                    onChange={(e) =>
+                        router.get(
+                            "/patients",
+                            {
+                                search: e.target.value,
+                            },
+                            {
+                                preserveState: true,
+                                replace: true,
+                            }
+                        )
+                    }
+                    className="w-full border rounded-lg p-2"
+                />
 
             </div>
 
@@ -58,7 +101,7 @@ export default function Index({ patients }: Props) {
 
                     <tbody>
 
-                        {patients.map((patient) => (
+                        {patients.data.map((patient) => (
 
                             <tr
                                 key={patient.id}
@@ -91,6 +134,7 @@ export default function Index({ patients }: Props) {
                                     </Link>
 
                                     <button
+                                        onClick={() => handleDelete(patient.id)}
                                         className="bg-red-600 text-white px-3 py-1 rounded"
                                     >
                                         Delete
@@ -105,6 +149,30 @@ export default function Index({ patients }: Props) {
                     </tbody>
 
                 </table>
+
+                <div className="mt-4 flex gap-2">
+
+                {patients.links?.map((link: any, index: number) => (
+
+                    <button
+                        key={index}
+                        disabled={!link.url}
+                        onClick={() => {
+
+                            if (link.url) {
+                                router.visit(link.url);
+                            }
+
+                        }}
+                        className="px-3 py-1 border rounded"
+                        dangerouslySetInnerHTML={{
+                            __html: link.label
+                        }}
+                    />
+
+                ))}
+
+            </div>
 
             </div>
 

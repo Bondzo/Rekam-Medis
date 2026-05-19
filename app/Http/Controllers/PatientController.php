@@ -8,12 +8,40 @@ use Inertia\Inertia;
 
 class PatientController extends Controller
 {
-    public function index()
+public function index(Request $request)
     {
-        $patients = Patient::latest()->get();
+        $search = $request->search;
+
+        $patients = Patient::query()
+
+            ->when($search, function ($query) use ($search) {
+
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere(
+                        'medical_record_number',
+                        'like',
+                        "%{$search}%"
+                    )
+                    ->orWhere(
+                        'nik',
+                        'like',
+                        "%{$search}%"
+                    );
+
+            })
+
+            ->latest()
+
+            ->paginate(10)
+
+            ->withQueryString();
 
         return Inertia::render('Patients/Index', [
-            'patients' => $patients
+            'patients' => $patients,
+
+            'filters' => [
+                'search' => $search,
+            ]
         ]);
     }
 
@@ -85,6 +113,13 @@ class PatientController extends Controller
                 'phone' => $request->phone,
                 'address' => $request->address,
             ]);
+
+            return redirect()->route('patients.index');
+        }
+
+    public function destroy(Patient $patient)
+        {
+            $patient->delete();
 
             return redirect()->route('patients.index');
         }
