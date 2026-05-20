@@ -9,9 +9,14 @@ return new class extends Migration
 public function up(): void
 {
     Schema::create('queues', function (Blueprint $table) {
+
         $table->id();
 
         $table->foreignId('patient_id')
+            ->constrained()
+            ->cascadeOnDelete();
+
+        $table->foreignId('doctor_id')
             ->constrained()
             ->cascadeOnDelete();
 
@@ -26,6 +31,7 @@ public function up(): void
         ])->default('waiting');
 
         $table->timestamps();
+
     });
 }
 

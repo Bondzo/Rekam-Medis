@@ -1,7 +1,13 @@
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 
 export default function Sidebar() {
+
+    const { auth } = usePage().props as any;
+
+    const user = auth.user;
+
     return (
+
         <div className="w-64 min-h-screen bg-white shadow-lg p-4">
 
             <h1 className="text-2xl font-bold mb-8">
@@ -17,12 +23,16 @@ export default function Sidebar() {
                     Dashboard
                 </Link>
 
-                <Link
-                    href="/patients"
-                    className="block p-2 rounded hover:bg-gray-100"
-                >
-                    Patients
-                </Link>
+                {user.role !== "doctor" && (
+
+                    <Link
+                        href="/patients"
+                        className="block p-2 rounded hover:bg-gray-100"
+                    >
+                        Patients
+                    </Link>
+
+                )}
 
                 <Link
                     href="/queues"
@@ -31,26 +41,38 @@ export default function Sidebar() {
                     Queues
                 </Link>
 
-                <Link
-                    href="/doctors"
-                    className="block p-2 rounded hover:bg-gray-100"
-                >
-                    Doctors
-                </Link>
+                {user.role === "admin" && (
 
-                <Link
-                    href="/medical-records"
-                    className="block p-2 rounded hover:bg-gray-100"
-                >
-                    Medical Records
-                </Link>
+                    <Link
+                        href="/doctors"
+                        className="block p-2 rounded hover:bg-gray-100"
+                    >
+                        Doctors
+                    </Link>
 
-                <Link
-                    href="/payments"
-                    className="block p-2 rounded hover:bg-gray-100"
-                >
-                    Payments
-                </Link>
+                )}
+
+                {user.role !== "staff" && (
+
+                    <Link
+                        href="/medical-records"
+                        className="block p-2 rounded hover:bg-gray-100"
+                    >
+                        Medical Records
+                    </Link>
+
+                )}
+
+                {user.role !== "doctor" && (
+
+                    <Link
+                        href="/payments"
+                        className="block p-2 rounded hover:bg-gray-100"
+                    >
+                        Payments
+                    </Link>
+
+                )}
 
                 <Link
                     href="/logout"
@@ -62,6 +84,8 @@ export default function Sidebar() {
                 </Link>
 
             </div>
+
         </div>
+
     );
 }
