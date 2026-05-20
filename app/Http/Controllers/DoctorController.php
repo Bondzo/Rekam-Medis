@@ -38,4 +38,38 @@ class DoctorController extends Controller
 
             return redirect()->route('doctors.index');
         }
+
+    public function destroy(Doctor $doctor)
+        {
+            $doctor->delete();
+
+            return redirect()->route('doctors.index');
+        }
+
+    public function edit(Doctor $doctor)
+        {
+            return Inertia::render('Doctors/Edit', [
+                'doctor' => $doctor
+            ]);
+        }
+
+    public function update(
+            Request $request,
+            Doctor $doctor
+        )
+        {
+            $request->validate([
+                'name' => 'required',
+                'specialist' => 'required',
+            ]);
+
+            $doctor->update([
+                'name' => $request->name,
+                'specialist' => $request->specialist,
+                'phone' => $request->phone,
+                'address' => $request->address,
+            ]);
+
+            return redirect()->route('doctors.index');
+        }
 }

@@ -1,9 +1,18 @@
 import DashboardLayout from "../../Layouts/DashboardLayout";
-import { Link } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
 
 type Props = {
     doctors: any[];
 };
+
+function handleDelete(id: number) {
+
+    if (confirm("Delete this doctor?")) {
+
+        router.delete(`/doctors/${id}`);
+
+    }
+}
 
 export default function Index({ doctors }: Props) {
     return (
@@ -45,7 +54,15 @@ export default function Index({ doctors }: Props) {
                                 Phone
                             </th>
 
+                            <th className="p-4 text-left">
+                                Actions
+                            </th>
+
+
                         </tr>
+
+
+
 
                     </thead>
 
@@ -69,6 +86,24 @@ export default function Index({ doctors }: Props) {
                                 <td className="p-4">
                                     {doctor.phone}
                                 </td>
+
+                                                            <td className="p-4 flex gap-2">
+
+                                <Link
+                                    href={`/doctors/${doctor.id}/edit`}
+                                    className="inline-block bg-yellow-500 text-black px-3 py-1 rounded-lg"
+                                >
+                                    Edit
+                                </Link>
+
+                                <button
+                                    onClick={() => handleDelete(doctor.id)}
+                                    className="inline-block bg-red-600 text-white px-3 py-1 rounded-lg"
+                                >
+                                    Delete
+                                </button>
+
+                            </td>
 
                             </tr>
 
