@@ -15,13 +15,7 @@ public function up(): void
             ->constrained()
             ->cascadeOnDelete();
 
-        $table->foreignId('medicine_id')
-            ->constrained()
-            ->cascadeOnDelete();
-
-        $table->string('dosage');
-
-        $table->integer('quantity');
+        $table->text('notes')->nullable();
 
         $table->timestamps();
     });

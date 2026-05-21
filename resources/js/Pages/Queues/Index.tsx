@@ -126,12 +126,9 @@ export default function Index({ queues }: Props) {
                                 Status
                             </th>
 
-                            {user.role !== "doctor" && (
-
                             <th className="p-4 text-left">
                                 Actions
                             </th>
-                            )}
 
                         </tr>
                                 
@@ -158,51 +155,56 @@ export default function Index({ queues }: Props) {
                                 <td className="p-4">
                                     Dr. {queue.doctor?.name}
                                 </td>
-
+                                
                                 <td className="p-4">
                                     {queue.status}
                                 </td>
 
-                                {user.role !== "doctor" && (
-
                                 <td className="p-4 flex gap-2">
 
-                                    <button
-                                        onClick={() =>
-                                            updateStatus(
-                                                queue.id,
-                                                "checking"
-                                            )
-                                        }
-                                        className="bg-yellow-500 text-black px-3 py-1 rounded-lg"
-                                    >
-                                        Checking
-                                    </button>
+                                    {user.role === "doctor" && queue.status !== "done" && (
+                                        <Link
+                                            href={route("medical-records.create", {
+                                                queue_id: queue.id,
+                                            })}
+                                            className="bg-green-600 text-white px-3 py-1 rounded-lg"
+                                        >
+                                            Examine
+                                        </Link>
+                                    )}
 
-                                    <button
-                                        onClick={() =>
-                                            updateStatus(
-                                                queue.id,
-                                                "done"
-                                            )
-                                        }
-                                        className="bg-blue-600 text-white px-3 py-1 rounded-lg"
-                                    >
-                                        Done
-                                    </button>
+                                    {user.role !== "doctor" && (
+                                        <>
+                                            <button
+                                                onClick={() =>
+                                                    updateStatus(queue.id, "checking")
+                                                }
+                                                className="bg-yellow-500 text-black px-3 py-1 rounded-lg"
+                                            >
+                                                Checking
+                                            </button>
 
-                                    <button
-                                        onClick={() =>
-                                            handleDelete(queue.id)
-                                        }
-                                        className="bg-red-600 text-white px-3 py-1 rounded-lg"
-                                    >
-                                        Delete
-                                    </button>
+                                            <button
+                                                onClick={() =>
+                                                    updateStatus(queue.id, "done")
+                                                }
+                                                className="bg-blue-600 text-white px-3 py-1 rounded-lg"
+                                            >
+                                                Done
+                                            </button>
+
+                                            <button
+                                                onClick={() =>
+                                                    handleDelete(queue.id)
+                                                }
+                                                className="bg-red-600 text-white px-3 py-1 rounded-lg"
+                                            >
+                                                Delete
+                                            </button>
+                                        </>
+                                    )}
 
                                 </td>
-
-                                    )}
 
                             </tr>
 

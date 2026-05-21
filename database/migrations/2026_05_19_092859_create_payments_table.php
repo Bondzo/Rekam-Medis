@@ -31,6 +31,11 @@ public function up(): void
 
         $table->date('payment_date');
 
+        $table->enum('status', [
+            'unpaid',
+            'paid'
+        ])->default('unpaid');
+
         $table->timestamps();
     });
 }

@@ -5,6 +5,8 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\QueueController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MedicalRecordController;
+use App\Http\Controllers\MedicineController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -66,11 +68,35 @@ Route::middleware([
         QueueController::class
     );
 
+    Route::put(
+        '/queues/{queue}/status',
+        [QueueController::class, 'updateStatus']
+    )->name('queues.updateStatus');
+
 });
 
-Route::put(
-    '/queues/{queue}/status',
-    [QueueController::class, 'updateStatus']
-);
+Route::middleware([
+    'auth',
+    'role:admin,doctor'
+])->group(function () {
+
+    Route::resource(
+        'medical-records',
+        MedicalRecordController::class
+    );
+
+});
+
+Route::middleware([
+    'auth',
+    'role:admin,staff'
+])->group(function () {
+
+    Route::resource(
+        'medicines',
+        MedicineController::class
+    );
+
+});
 
 require __DIR__.'/auth.php';

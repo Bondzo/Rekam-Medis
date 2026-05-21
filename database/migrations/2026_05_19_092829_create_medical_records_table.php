@@ -21,19 +21,14 @@ public function up(): void
 
         $table->foreignId('queue_id')
             ->nullable()
-            ->constrained()
+            ->constrained('queues')
             ->nullOnDelete();
 
         $table->text('complaint');
-
         $table->text('physical_examination');
-
         $table->text('diagnosis');
-
         $table->text('medical_treatment');
-
         $table->date('record_date');
-
         $table->text('notes')->nullable();
 
         $table->timestamps();

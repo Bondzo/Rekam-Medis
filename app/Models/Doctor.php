@@ -12,4 +12,9 @@ class Doctor extends Model
         'phone',
         'address',
     ];
+
+    public function medicalRecords()
+        {
+            return $this->hasMany(MedicalRecord::class);
+        }
 }
