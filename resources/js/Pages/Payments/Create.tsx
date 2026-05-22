@@ -32,6 +32,7 @@ type PaymentForm = {
     admin_fee: string;
     doctor_fee: string;
     payment_method: string;
+    payment_date: string;
 };
 
 type Props = {
@@ -45,6 +46,7 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
         admin_fee: '0',
         doctor_fee: '0',
         payment_method: 'cash',
+        payment_date: new Date().toISOString().slice(0, 10),
     });
 
     const selectedMedicalRecord =
@@ -204,7 +206,7 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                         </div>
                     </div>
 
-                    <div className="mb-6 grid grid-cols-4 gap-4">
+                    <div className="mb-6 grid grid-cols-5 gap-4">
                         <div>
                             <label className="mb-1 block text-sm font-medium">
                                 Medicine Fee
@@ -247,6 +249,23 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                             {errors.doctor_fee && (
                                 <p className="mt-1 text-sm text-red-600">
                                     {errors.doctor_fee}
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="mb-1 block text-sm font-medium">
+                                Payment Date
+                            </label>
+                            <input
+                                type="date"
+                                value={data.payment_date}
+                                onChange={(e) => setData('payment_date', e.target.value)}
+                                className="w-full rounded-lg border-gray-300"
+                            />
+                            {errors.payment_date && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.payment_date}
                                 </p>
                             )}
                         </div>

@@ -59,6 +59,11 @@ type Props = {
 };
 
 export default function Show({ payment, midtransClientKey }: Props) {
+    const canPayWithMidtrans =
+        ['midtrans', 'qris'].includes(payment.payment_method) &&
+        payment.status === 'unpaid' &&
+        Boolean(payment.snap_token);
+
     useEffect(() => {
         if (!midtransClientKey || !payment.snap_token) {
             return;
@@ -216,7 +221,7 @@ export default function Show({ payment, midtransClientKey }: Props) {
                             </div>
                         </div>
 
-                        {payment.status === 'unpaid' && payment.snap_token && (
+                        {canPayWithMidtrans && (
                             <div className="mt-6 flex justify-end">
                                 <button
                                     type="button"

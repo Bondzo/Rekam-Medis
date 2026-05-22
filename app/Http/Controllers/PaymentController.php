@@ -61,6 +61,7 @@ class PaymentController extends Controller
             'admin_fee' => 'required|numeric|min:0',
             'doctor_fee' => 'required|numeric|min:0',
             'payment_method' => 'required|in:cash,transfer,qris,midtrans',
+            'payment_date' => 'required|date',
         ]);
 
         $payment = DB::transaction(function () use ($validated) {
@@ -97,15 +98,15 @@ class PaymentController extends Controller
                 'medicine_fee' => $medicineFee,
                 'total_payment' => $totalPayment,
                 'payment_method' => $validated['payment_method'],
-                'payment_date' => now()->toDateString(),
+                'payment_date' => $validated['payment_date'],
                 'status' => 'unpaid',
             ]);
 
-            $payment->update([
-                'midtrans_order_id' => 'PAY-'.$payment->id.'-'.now()->timestamp,
-            ]);
+            if (in_array($validated['payment_method'], ['midtrans', 'qris'], true)) {
+                $payment->update([
+                    'midtrans_order_id' => 'PAY-'.$payment->id.'-'.now()->timestamp,
+                ]);
 
-            if ($validated['payment_method'] === 'midtrans') {
                 $payment->update([
                     'snap_token' => $this->createSnapToken($payment, $medicalRecord),
                 ]);
@@ -145,6 +146,10 @@ class PaymentController extends Controller
         $statusCode = $request->input('status_code');
         $grossAmount = $request->input('gross_amount');
         $signatureKey = $request->input('signature_key');
+
+        if (!$orderId) {
+            abort(422, 'Missing Midtrans order id.');
+        }
 
         if ($signatureKey) {
             $expectedSignature = hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
