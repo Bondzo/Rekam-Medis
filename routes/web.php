@@ -99,6 +99,11 @@ Route::middleware([
         MedicineController::class
     );
 
+    Route::put(
+        '/payments/{payment}/confirm',
+        [PaymentController::class, 'confirm']
+    )->name('payments.confirm');
+
     Route::resource(
         'payments',
         PaymentController::class

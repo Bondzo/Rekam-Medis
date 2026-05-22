@@ -63,6 +63,10 @@ export default function Show({ payment, midtransClientKey }: Props) {
         ['midtrans', 'qris'].includes(payment.payment_method) &&
         payment.status === 'unpaid' &&
         Boolean(payment.snap_token);
+    const canConfirmManually =
+        payment.status === 'unpaid' &&
+        payment.payment_method !== 'midtrans' &&
+        !canPayWithMidtrans;
 
     useEffect(() => {
         if (!midtransClientKey || !payment.snap_token) {
@@ -90,8 +94,17 @@ export default function Show({ payment, midtransClientKey }: Props) {
 
         window.snap.pay(payment.snap_token, {
             onSuccess: () => {
-                alert('Payment success. Waiting for payment status update.');
-                router.reload();
+                router.put(
+                    route('payments.confirm', payment.id),
+                    {},
+                    {
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            alert('Pembayaran berhasil');
+                            router.reload();
+                        },
+                    }
+                );
             },
             onPending: () => {
                 alert('Payment is pending.');
@@ -105,6 +118,20 @@ export default function Show({ payment, midtransClientKey }: Props) {
                 alert('Payment popup closed.');
             },
         });
+    };
+
+    const confirmPayment = () => {
+        router.put(
+            route('payments.confirm', payment.id),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    alert('Pembayaran berhasil dikonfirmasi');
+                    router.reload();
+                },
+            }
+        );
     };
 
     const prescriptionItems = payment.medical_record?.prescription?.items ?? [];
@@ -175,6 +202,12 @@ export default function Show({ payment, midtransClientKey }: Props) {
                             </p>
                         </div>
 
+                        {payment.status === 'paid' && (
+                            <div className="mb-6 rounded-lg bg-green-100 p-4 text-sm font-semibold text-green-700">
+                                Pembayaran berhasil
+                            </div>
+                        )}
+
                         <div className="mb-6 overflow-hidden rounded-lg border">
                             <table className="w-full border-collapse">
                                 <thead className="bg-gray-100">
@@ -229,6 +262,18 @@ export default function Show({ payment, midtransClientKey }: Props) {
                                     className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
                                 >
                                     Pay with Midtrans
+                                </button>
+                            </div>
+                        )}
+
+                        {canConfirmManually && (
+                            <div className="mt-6 flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={confirmPayment}
+                                    className="rounded-lg bg-green-600 px-5 py-2 text-white hover:bg-green-700"
+                                >
+                                    Konfirmasi Pembayaran
                                 </button>
                             </div>
                         )}

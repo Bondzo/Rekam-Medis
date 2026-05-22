@@ -134,6 +134,21 @@ class PaymentController extends Controller
         ]);
     }
 
+    public function confirm(Payment $payment)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'], true)) {
+            abort(403);
+        }
+
+        $payment->update([
+            'status' => 'paid',
+        ]);
+
+        return redirect()
+            ->route('payments.show', $payment)
+            ->with('success', 'Pembayaran berhasil dikonfirmasi');
+    }
+
     public function callback(Request $request)
     {
         $serverKey = config('midtrans.server_key');
