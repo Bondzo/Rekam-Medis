@@ -1,5 +1,6 @@
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { FormEvent } from 'react';
 
 type Medicine = {
     id: number;
@@ -19,23 +20,42 @@ type MedicalRecord = {
     };
 };
 
+type PrescriptionItemForm = {
+    medicine_id: string;
+    dosage: string;
+    quantity: string;
+};
+
+type PrescriptionForm = {
+    medical_record_id: number | string;
+    notes: string;
+    items: PrescriptionItemForm[];
+};
+
 type Props = {
-    medicalRecord: MedicalRecord;
+    medicalRecord: MedicalRecord | null;
+    medicalRecords: MedicalRecord[];
     medicines: Medicine[];
 };
 
-export default function Create({ medicalRecord, medicines }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
+export default function Create({ medicalRecord, medicalRecords, medicines }: Props) {
+    const { data, setData, post, processing, errors } = useForm<PrescriptionForm>({
         medical_record_id: medicalRecord?.id || '',
         notes: '',
         items: [
             {
                 medicine_id: '',
                 dosage: '',
-                quantity: 1,
+                quantity: '1',
             },
         ],
     });
+
+    const selectedMedicalRecord =
+        medicalRecord ??
+        medicalRecords.find(
+            (record) => record.id === Number(data.medical_record_id)
+        );
 
     const addItem = () => {
         setData('items', [
@@ -43,7 +63,7 @@ export default function Create({ medicalRecord, medicines }: Props) {
             {
                 medicine_id: '',
                 dosage: '',
-                quantity: 1,
+                quantity: '1',
             },
         ]);
     };
@@ -55,13 +75,20 @@ export default function Create({ medicalRecord, medicines }: Props) {
         );
     };
 
-    const updateItem = (index: number, field: string, value: any) => {
-        const newItems = [...data.items] as any;
-        newItems[index][field] = value;
+    const updateItem = (
+        index: number,
+        field: keyof PrescriptionItemForm,
+        value: string | number
+    ) => {
+        const newItems = [...data.items];
+        newItems[index] = {
+            ...newItems[index],
+            [field]: value,
+        };
         setData('items', newItems);
     };
 
-    const submit = (e: React.FormEvent) => {
+    const submit = (e: FormEvent) => {
         e.preventDefault();
         post(route('prescriptions.store'));
     };
@@ -95,12 +122,38 @@ export default function Create({ medicalRecord, medicines }: Props) {
                             <label className="mb-1 block text-sm font-medium">
                                 Patient
                             </label>
-                            <input
-                                type="text"
-                                value={medicalRecord?.patient?.name || ''}
-                                disabled
-                                className="w-full rounded-lg border-gray-300 bg-gray-100"
-                            />
+
+                            {medicalRecord ? (
+                                <input
+                                    type="text"
+                                    value={medicalRecord.patient?.name || ''}
+                                    disabled
+                                    className="w-full rounded-lg border-gray-300 bg-gray-100"
+                                />
+                            ) : (
+                                <select
+                                    value={data.medical_record_id}
+                                    onChange={(e) =>
+                                        setData('medical_record_id', e.target.value)
+                                    }
+                                    className="w-full rounded-lg border-gray-300"
+                                >
+                                    <option value="">Select medical record</option>
+                                    {medicalRecords.map((record) => (
+                                        <option key={record.id} value={record.id}>
+                                            {record.patient?.medical_record_number} -{' '}
+                                            {record.patient?.name} - Dr.{' '}
+                                            {record.doctor?.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+
+                            {errors.medical_record_id && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.medical_record_id}
+                                </p>
+                            )}
                         </div>
 
                         <div>
@@ -109,7 +162,10 @@ export default function Create({ medicalRecord, medicines }: Props) {
                             </label>
                             <input
                                 type="text"
-                                value={medicalRecord?.patient?.medical_record_number || ''}
+                                value={
+                                    selectedMedicalRecord?.patient
+                                        ?.medical_record_number || ''
+                                }
                                 disabled
                                 className="w-full rounded-lg border-gray-300 bg-gray-100"
                             />
@@ -126,9 +182,10 @@ export default function Create({ medicalRecord, medicines }: Props) {
                                 (medicine) => medicine.id === Number(item.medicine_id)
                             );
 
+                            const quantity = Number(item.quantity);
                             const subtotal =
-                                selectedMedicine && item.quantity
-                                    ? Number(selectedMedicine.price) * Number(item.quantity)
+                                selectedMedicine && Number.isFinite(quantity) && quantity > 0
+                                    ? Number(selectedMedicine.price) * quantity
                                     : 0;
 
                             return (
@@ -158,6 +215,11 @@ export default function Create({ medicalRecord, medicines }: Props) {
                                                     </option>
                                                 ))}
                                             </select>
+                                            {errors[`items.${index}.medicine_id`] && (
+                                                <p className="mt-1 text-sm text-red-600">
+                                                    {errors[`items.${index}.medicine_id`]}
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div>
@@ -173,6 +235,11 @@ export default function Create({ medicalRecord, medicines }: Props) {
                                                 placeholder="3x1 setelah makan"
                                                 className="w-full rounded-lg border-gray-300"
                                             />
+                                            {errors[`items.${index}.dosage`] && (
+                                                <p className="mt-1 text-sm text-red-600">
+                                                    {errors[`items.${index}.dosage`]}
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div>
@@ -181,17 +248,21 @@ export default function Create({ medicalRecord, medicines }: Props) {
                                             </label>
                                             <input
                                                 type="number"
-                                                min="1"
                                                 value={item.quantity}
                                                 onChange={(e) =>
                                                     updateItem(
                                                         index,
                                                         'quantity',
-                                                        Number(e.target.value)
+                                                        e.target.value
                                                     )
                                                 }
                                                 className="w-full rounded-lg border-gray-300"
                                             />
+                                            {errors[`items.${index}.quantity`] && (
+                                                <p className="mt-1 text-sm text-red-600">
+                                                    {errors[`items.${index}.quantity`]}
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div>
@@ -227,6 +298,12 @@ export default function Create({ medicalRecord, medicines }: Props) {
                         >
                             + Add Medicine
                         </button>
+
+                        {errors.items && (
+                            <p className="mt-2 text-sm text-red-600">
+                                {errors.items}
+                            </p>
+                        )}
                     </div>
 
                     <div className="mb-6">

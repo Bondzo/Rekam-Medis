@@ -7,6 +7,8 @@ use App\Models\Medicine;
 use App\Models\Prescription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class PrescriptionController extends Controller
@@ -35,6 +37,10 @@ class PrescriptionController extends Controller
 
         return Inertia::render('Prescriptions/Create', [
             'medicalRecord' => $medicalRecord,
+            'medicalRecords' => MedicalRecord::with(['patient', 'doctor'])
+                ->doesntHave('prescription')
+                ->latest()
+                ->get(),
             'medicines' => Medicine::orderBy('name')->get(),
         ]);
     }
@@ -42,7 +48,11 @@ class PrescriptionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'medical_record_id' => 'required|exists:medical_records,id',
+            'medical_record_id' => [
+                'required',
+                'exists:medical_records,id',
+                Rule::unique('prescriptions', 'medical_record_id'),
+            ],
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.medicine_id' => 'required|exists:medicines,id',
@@ -57,10 +67,14 @@ class PrescriptionController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
-                $medicine = Medicine::findOrFail($item['medicine_id']);
+                $medicine = Medicine::where('id', $item['medicine_id'])
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
                 if ($medicine->stock < $item['quantity']) {
-                    throw new \Exception("Stock obat {$medicine->name} tidak cukup.");
+                    throw ValidationException::withMessages([
+                        'items' => "Stock obat {$medicine->name} tidak cukup.",
+                    ]);
                 }
 
                 $subtotal = $medicine->price * $item['quantity'];

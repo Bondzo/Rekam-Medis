@@ -63,6 +63,17 @@ export default function Sidebar() {
 
                 )}
 
+                {user.role !== "staff" && (
+
+                    <Link
+                        href="/prescriptions"
+                        className="block p-2 rounded hover:bg-gray-100"
+                    >
+                        Prescriptions
+                    </Link>
+
+                )}
+
                 {user.role !== "doctor" && (
 
                     <Link

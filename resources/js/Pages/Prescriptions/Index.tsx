@@ -50,6 +50,13 @@ export default function Index({ prescriptions }: Props) {
                         </p>
                     </div>
 
+                    <Link
+                        href={route('prescriptions.create')}
+                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                        + Create Prescription
+                    </Link>
+
                 </div>
 
                 <div className="overflow-hidden rounded-xl bg-white shadow">
@@ -125,7 +132,7 @@ export default function Index({ prescriptions }: Props) {
 
                                                         <div key={item.id}>
 
-                                                            • {item.medicine?.name}
+                                                            - {item.medicine?.name}
                                                             {' '}
                                                             ({item.quantity})
 

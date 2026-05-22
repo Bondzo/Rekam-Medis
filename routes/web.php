@@ -112,7 +112,6 @@ Route::middleware([
         'index',
         'create',
         'store',
-        'show',
     ]);
 
 });
