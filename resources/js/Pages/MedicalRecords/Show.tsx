@@ -42,13 +42,24 @@ export default function Show({ record }: Props) {
                         </p>
                     </div>
 
-                    <Link
-                        href={route('medical-records.index')}
-                        className="rounded-lg bg-gray-700 px-4 py-2 text-sm text-white hover:bg-gray-800"
-                    >
-                        Back
-                    </Link>
-                </div>
+                    <div className="flex gap-2">
+                        <Link
+                            href={route('prescriptions.create', {
+                                medical_record_id: record.id,
+                            })}
+                            className="rounded-lg bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700"
+                        >
+                            Create Prescription
+                        </Link>
+
+                        <Link
+                            href={route('medical-records.index')}
+                            className="rounded-lg bg-gray-700 px-4 py-2 text-sm text-white hover:bg-gray-800"
+                        >
+                            Back
+                        </Link>
+                    </div>
+                    </div>
 
                 <div className="grid gap-6">
                     <div className="rounded-xl bg-white p-6 shadow">

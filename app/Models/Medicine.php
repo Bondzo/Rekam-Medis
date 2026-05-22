@@ -13,4 +13,9 @@ class Medicine extends Model
         'price',
         'description',
     ];
+
+    public function prescriptionItems()
+    {
+        return $this->hasMany(PrescriptionItem::class);
+    }
 }

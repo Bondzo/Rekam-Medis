@@ -1,5 +1,5 @@
 import DashboardLayout from "../../Layouts/DashboardLayout";
-import { useForm } from "@inertiajs/react";
+import { useForm, Link } from "@inertiajs/react";
 
 type Props = {
     patients: any[];
