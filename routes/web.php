@@ -7,6 +7,7 @@ use App\Http\Controllers\QueueController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MedicalRecordController;
 use App\Http\Controllers\MedicineController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PrescriptionController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -98,7 +99,22 @@ Route::middleware([
         MedicineController::class
     );
 
+    Route::resource(
+        'payments',
+        PaymentController::class
+    )->only([
+        'index',
+        'create',
+        'store',
+        'show',
+    ]);
+
 });
+
+Route::post(
+    '/midtrans/callback',
+    [PaymentController::class, 'callback']
+)->name('midtrans.callback');
 
 Route::middleware([
     'auth',

@@ -37,4 +37,9 @@ class MedicalRecord extends Model
     {
         return $this->hasOne(Prescription::class);
     }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
+    }
 }
