@@ -60,7 +60,7 @@ class PaymentController extends Controller
             'medical_record_id' => 'required|exists:medical_records,id',
             'admin_fee' => 'required|numeric|min:0',
             'doctor_fee' => 'required|numeric|min:0',
-            'payment_method' => 'required|in:cash,transfer,qris,midtrans',
+            'payment_method' => 'required|in:cash,transfer,qris',
             'payment_date' => 'required|date',
         ]);
 
@@ -102,7 +102,7 @@ class PaymentController extends Controller
                 'status' => 'unpaid',
             ]);
 
-            if (in_array($validated['payment_method'], ['midtrans', 'qris'], true)) {
+            if (in_array($validated['payment_method'], ['transfer', 'qris'], true)) {
                 $payment->update([
                     'midtrans_order_id' => 'PAY-'.$payment->id.'-'.now()->timestamp,
                 ]);
@@ -140,13 +140,31 @@ class PaymentController extends Controller
             abort(403);
         }
 
-        $payment->update([
-            'status' => 'paid',
-        ]);
+        if ($payment->status === 'unpaid') {
+            $payment->update([
+                'status' => 'paid',
+            ]);
+        }
 
         return redirect()
-            ->route('payments.show', $payment)
+            ->route('payments.success', $payment)
             ->with('success', 'Pembayaran berhasil dikonfirmasi');
+    }
+
+    public function success(Payment $payment)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'], true)) {
+            abort(403);
+        }
+
+        $payment->load([
+            'medicalRecord.patient',
+            'medicalRecord.doctor',
+        ]);
+
+        return Inertia::render('Payments/Success', [
+            'payment' => $payment,
+        ]);
     }
 
     public function callback(Request $request)

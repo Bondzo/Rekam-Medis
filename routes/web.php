@@ -104,6 +104,11 @@ Route::middleware([
         [PaymentController::class, 'confirm']
     )->name('payments.confirm');
 
+    Route::get(
+        '/payments/{payment}/success',
+        [PaymentController::class, 'success']
+    )->name('payments.success');
+
     Route::resource(
         'payments',
         PaymentController::class

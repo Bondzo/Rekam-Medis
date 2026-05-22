@@ -60,12 +60,12 @@ type Props = {
 
 export default function Show({ payment, midtransClientKey }: Props) {
     const canPayWithMidtrans =
-        ['midtrans', 'qris'].includes(payment.payment_method) &&
+        ['transfer', 'qris'].includes(payment.payment_method) &&
         payment.status === 'unpaid' &&
         Boolean(payment.snap_token);
     const canConfirmManually =
         payment.status === 'unpaid' &&
-        payment.payment_method !== 'midtrans' &&
+        payment.payment_method === 'cash' &&
         !canPayWithMidtrans;
 
     useEffect(() => {
@@ -101,21 +101,19 @@ export default function Show({ payment, midtransClientKey }: Props) {
                         preserveScroll: true,
                         onSuccess: () => {
                             alert('Pembayaran berhasil');
-                            router.reload();
+                            router.visit(route('payments.success', payment.id));
                         },
                     }
                 );
             },
             onPending: () => {
-                alert('Payment is pending.');
-                router.reload();
+                alert('Pembayaran masih pending');
             },
             onError: () => {
-                alert('Payment failed.');
-                router.reload();
+                alert('Pembayaran gagal');
             },
             onClose: () => {
-                alert('Payment popup closed.');
+                alert('Pembayaran belum selesai');
             },
         });
     };
@@ -128,7 +126,7 @@ export default function Show({ payment, midtransClientKey }: Props) {
                 preserveScroll: true,
                 onSuccess: () => {
                     alert('Pembayaran berhasil dikonfirmasi');
-                    router.reload();
+                    router.visit(route('payments.success', payment.id));
                 },
             }
         );
@@ -261,7 +259,7 @@ export default function Show({ payment, midtransClientKey }: Props) {
                                     onClick={payWithMidtrans}
                                     className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
                                 >
-                                    Pay with Midtrans
+                                    Bayar Sekarang
                                 </button>
                             </div>
                         )}

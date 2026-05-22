@@ -282,7 +282,6 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                                 <option value="cash">Cash</option>
                                 <option value="transfer">Transfer</option>
                                 <option value="qris">QRIS</option>
-                                <option value="midtrans">Midtrans</option>
                             </select>
                             {errors.payment_method && (
                                 <p className="mt-1 text-sm text-red-600">
