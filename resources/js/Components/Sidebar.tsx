@@ -1,113 +1,75 @@
 import { Link, usePage } from "@inertiajs/react";
 
+type Role = "admin" | "doctor" | "staff";
+
+type MenuItem = {
+    label: string;
+    href: string;
+};
+
+const menusByRole: Record<Role, MenuItem[]> = {
+    admin: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Patients", href: "/patients" },
+        { label: "Queues", href: "/queues" },
+        { label: "Doctors", href: "/doctors" },
+        { label: "Medical Records", href: "/medical-records" },
+        { label: "Prescriptions", href: "/prescriptions" },
+        { label: "Medicines", href: "/medicines" },
+        { label: "Payments", href: "/payments" },
+    ],
+    doctor: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Queues", href: "/queues" },
+        { label: "Medical Records", href: "/medical-records" },
+        { label: "Prescriptions", href: "/prescriptions" },
+    ],
+    staff: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Patients", href: "/patients" },
+        { label: "Queues", href: "/queues" },
+        { label: "Medicines", href: "/medicines" },
+        { label: "Payments", href: "/payments" },
+    ],
+};
+
 export default function Sidebar() {
+    const { auth } = usePage().props as {
+        auth: {
+            user: {
+                role: Role;
+            };
+        };
+    };
 
-    const { auth } = usePage().props as any;
-
-    const user = auth.user;
+    const menuItems = menusByRole[auth.user.role] ?? menusByRole.staff;
 
     return (
-
-        <div className="w-64 min-h-screen bg-white shadow-lg p-4">
-
-            <h1 className="text-2xl font-bold mb-8">
+        <aside className="w-64 min-h-screen bg-white p-4 shadow-lg">
+            <h1 className="mb-8 text-2xl font-bold text-gray-900">
                 Rekam Medis
             </h1>
 
-            <div className="space-y-2">
-
-                <Link
-                    href="/dashboard"
-                    className="block p-2 rounded hover:bg-gray-100"
-                >
-                    Dashboard
-                </Link>
-
-                {user.role !== "doctor" && (
-
+            <nav className="space-y-2">
+                {menuItems.map((item) => (
                     <Link
-                        href="/patients"
-                        className="block p-2 rounded hover:bg-gray-100"
+                        key={item.href}
+                        href={item.href}
+                        className="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                     >
-                        Patients
+                        {item.label}
                     </Link>
-
-                )}
-
-                <Link
-                    href="/queues"
-                    className="block p-2 rounded hover:bg-gray-100"
-                >
-                    Queues
-                </Link>
-
-                {user.role === "admin" && (
-
-                    <Link
-                        href="/doctors"
-                        className="block p-2 rounded hover:bg-gray-100"
-                    >
-                        Doctors
-                    </Link>
-
-                )}
-
-                {user.role !== "staff" && (
-
-                    <Link
-                        href="/medical-records"
-                        className="block p-2 rounded hover:bg-gray-100"
-                    >
-                        Medical Records
-                    </Link>
-
-                )}
-
-                {user.role !== "staff" && (
-
-                    <Link
-                        href="/prescriptions"
-                        className="block p-2 rounded hover:bg-gray-100"
-                    >
-                        Prescriptions
-                    </Link>
-
-                )}
-
-                {user.role !== "doctor" && (
-
-                    <Link
-                        href="/medicines"
-                        className="block p-2 rounded hover:bg-gray-100"
-                    >
-                        Medicines
-                    </Link>
-
-                )}
-
-                {user.role !== "doctor" && (
-
-                    <Link
-                        href="/payments"
-                        className="block p-2 rounded hover:bg-gray-100"
-                    >
-                        Payments
-                    </Link>
-
-                )}
+                ))}
 
                 <Link
                     href="/logout"
                     method="post"
                     as="button"
-                    className="bg-red-600 text-white px-4 py-2 rounded"
+                    className="mt-6 w-full rounded-md bg-red-600 px-4 py-2 text-left text-sm font-semibold text-white hover:bg-red-700"
                 >
                     Logout
                 </Link>
-
-            </div>
-
-        </div>
-
+            </nav>
+        </aside>
     );
 }

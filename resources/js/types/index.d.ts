@@ -2,6 +2,7 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    role: 'admin' | 'doctor' | 'staff';
     email_verified_at?: string;
 }
 
