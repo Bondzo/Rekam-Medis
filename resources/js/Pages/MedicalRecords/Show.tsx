@@ -10,6 +10,7 @@ type Record = {
     record_date: string;
     notes?: string | null;
     patient?: {
+        id: number;
         name: string;
         medical_record_number: string;
         gender: string;
@@ -26,72 +27,129 @@ type Props = {
     record: Record;
 };
 
+const formatDate = (date: string) =>
+    new Intl.DateTimeFormat('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    }).format(new Date(date));
+
+function InfoItem({ label, value }: { label: string; value?: string | null }) {
+    return (
+        <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.6px] text-zinc-500 dark:text-zinc-400">
+                {label}
+            </p>
+            <p className="mt-1.5 text-sm font-medium leading-6 text-zinc-900 dark:text-zinc-100">
+                {value || '-'}
+            </p>
+        </div>
+    );
+}
+
+function TextSection({ label, value }: { label: string; value?: string | null }) {
+    return (
+        <div className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
+            <p className="text-[11px] font-bold uppercase tracking-[0.6px] text-zinc-500 dark:text-zinc-400">
+                {label}
+            </p>
+            <p className="mt-2 text-sm leading-7 text-zinc-800 dark:text-zinc-200">
+                {value || '-'}
+            </p>
+        </div>
+    );
+}
+
 export default function Show({ record }: Props) {
     return (
         <DashboardLayout>
             <Head title="Medical Record Detail" />
 
-            <div className="p-6">
-                <div className="mb-6 flex items-center justify-between">
+            <div className="mx-auto max-w-6xl p-6">
+                <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">
+                        <p className="mb-2 text-xs font-bold uppercase tracking-[1.5px] text-[var(--rm-action)]">
+                            Medical Records
+                        </p>
+                        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
                             Medical Record Detail
                         </h1>
-                        <p className="text-sm text-gray-500">
+                        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
                             Complete patient examination information
                         </p>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <Link
                             href={route('prescriptions.create', {
                                 medical_record_id: record.id,
                             })}
-                            className="rounded-lg bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700"
+                            className="inline-flex items-center rounded-xl border border-[#178a4b] bg-[#178a4b] px-5 py-2.5 text-sm font-bold uppercase tracking-[0.5px] text-white"
                         >
                             Create Prescription
                         </Link>
 
                         <Link
                             href={route('medical-records.index')}
-                            className="rounded-lg bg-gray-700 px-4 py-2 text-sm text-white hover:bg-gray-800"
+                            className="inline-flex items-center rounded-xl border border-[var(--rm-action)] px-5 py-2.5 text-sm font-bold uppercase tracking-[0.5px] text-[var(--rm-action)]"
                         >
                             Back
                         </Link>
                     </div>
-                    </div>
+                </div>
 
-                <div className="grid gap-6">
-                    <div className="rounded-xl bg-white p-6 shadow">
-                        <h2 className="mb-4 text-lg font-semibold">
-                            Patient Information
-                        </h2>
-
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <p><strong>MR Number:</strong> {record.patient?.medical_record_number ?? '-'}</p>
-                            <p><strong>Name:</strong> {record.patient?.name ?? '-'}</p>
-                            <p><strong>Gender:</strong> {record.patient?.gender ?? '-'}</p>
-                            <p><strong>Phone:</strong> {record.patient?.phone ?? '-'}</p>
-                            <p className="col-span-2"><strong>Address:</strong> {record.patient?.address ?? '-'}</p>
+                <div className="grid gap-5">
+                    <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                        <div className="mb-5 flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
+                            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                                Patient Information
+                            </h2>
+                            <span className="inline-flex w-fit items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.6px] text-zinc-800 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
+                                {record.patient?.medical_record_number ?? '-'}
+                            </span>
                         </div>
-                    </div>
 
-                    <div className="rounded-xl bg-white p-6 shadow">
-                        <h2 className="mb-4 text-lg font-semibold">
-                            Examination
-                        </h2>
-
-                        <div className="grid gap-4 text-sm">
-                            <p><strong>Date:</strong> {record.record_date}</p>
-                            <p><strong>Doctor:</strong> Dr. {record.doctor?.name ?? '-'}</p>
-                            <p><strong>Specialist:</strong> {record.doctor?.specialist ?? '-'}</p>
-                            <p><strong>Complaint:</strong> {record.complaint}</p>
-                            <p><strong>Physical Examination:</strong> {record.physical_examination}</p>
-                            <p><strong>Diagnosis:</strong> {record.diagnosis}</p>
-                            <p><strong>Medical Treatment:</strong> {record.medical_treatment}</p>
-                            <p><strong>Notes:</strong> {record.notes ?? '-'}</p>
+                        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                            <InfoItem label="Name" value={record.patient?.name} />
+                            <InfoItem label="Gender" value={record.patient?.gender} />
+                            <InfoItem label="Phone" value={record.patient?.phone} />
+                            <div className="sm:col-span-2 lg:col-span-3">
+                                <InfoItem label="Address" value={record.patient?.address} />
+                            </div>
                         </div>
-                    </div>
+                    </section>
+
+                    <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                        <div className="mb-5 flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
+                            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                                Examination
+                            </h2>
+                            <span className="inline-flex w-fit items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.6px] text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200">
+                                {formatDate(record.record_date)}
+                            </span>
+                        </div>
+
+                        <div className="grid gap-5">
+                            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                                <InfoItem
+                                    label="Doctor"
+                                    value={record.doctor?.name ? `Dr. ${record.doctor.name}` : '-'}
+                                />
+                                <InfoItem label="Specialist" value={record.doctor?.specialist} />
+                                <InfoItem label="Date" value={formatDate(record.record_date)} />
+                            </div>
+
+                            <TextSection label="Complaint" value={record.complaint} />
+                            <TextSection
+                                label="Physical Examination"
+                                value={record.physical_examination}
+                            />
+                            <TextSection label="Diagnosis" value={record.diagnosis} />
+                            <TextSection label="Medical Treatment" value={record.medical_treatment} />
+                            <TextSection label="Notes" value={record.notes} />
+                        </div>
+                    </section>
                 </div>
             </div>
         </DashboardLayout>

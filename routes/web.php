@@ -82,6 +82,11 @@ Route::middleware([
     'role:admin,doctor'
 ])->group(function () {
 
+    Route::get(
+        '/medical-records/patients/{patient}',
+        [MedicalRecordController::class, 'patientHistory']
+    )->middleware('role:admin')->name('medical-records.patient-history');
+
     Route::resource(
         'medical-records',
         MedicalRecordController::class
