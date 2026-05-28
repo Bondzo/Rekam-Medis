@@ -1,3 +1,279 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --rm-canvas: #ffffff;
+    --rm-surface: #ffffff;
+    --rm-surface-soft: #f7f7f7;
+    --rm-surface-elevated: #fafafa;
+    --rm-surface-strong: #ebebeb;
+    --rm-ink: #262626;
+    --rm-body: #3c3c3c;
+    --rm-muted: #6b7280;
+    --rm-hairline: #e6e6e6;
+    --rm-hairline-strong: #cccccc;
+    --rm-action: #1c69d4;
+    --rm-action-active: #0653b6;
+    --rm-accent-red: #e22718;
+    --rm-on-action: #ffffff;
+    --rm-m-blue-light: #0066b1;
+    --rm-m-blue-dark: #1c69d4;
+    --rm-m-red: #e22718;
+    color-scheme: light;
+}
+
+html.dark {
+    --rm-canvas: #000000;
+    --rm-surface: #1a1a1a;
+    --rm-surface-soft: #0d0d0d;
+    --rm-surface-elevated: #262626;
+    --rm-surface-strong: #262626;
+    --rm-ink: #ffffff;
+    --rm-body: #bbbbbb;
+    --rm-muted: #7e7e7e;
+    --rm-hairline: #3c3c3c;
+    --rm-hairline-strong: #3c3c3c;
+    --rm-action: #1c69d4;
+    --rm-action-active: #0653b6;
+    --rm-accent-red: #e22718;
+    --rm-on-action: #ffffff;
+    color-scheme: dark;
+}
+
+@layer base {
+    html {
+        font-family: BMWTypeNextLatin, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+        background: var(--rm-canvas);
+        color: var(--rm-body);
+        font-weight: 300;
+        letter-spacing: 0;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        color: var(--rm-ink);
+        font-weight: 700;
+        letter-spacing: 0;
+    }
+
+    button,
+    [role="button"],
+    th {
+        letter-spacing: 1.5px;
+    }
+
+    input,
+    select,
+    textarea {
+        border-color: var(--rm-hairline);
+        background-color: var(--rm-surface);
+        color: var(--rm-ink);
+    }
+}
+
+@layer components {
+    .m-stripe {
+        height: 4px;
+        background: linear-gradient(
+            90deg,
+            var(--rm-m-blue-light) 0 33.333%,
+            var(--rm-m-blue-dark) 33.333% 66.666%,
+            var(--rm-m-red) 66.666% 100%
+        );
+    }
+
+    .rm-card {
+        border: 1px solid var(--rm-hairline);
+        background: var(--rm-surface);
+        color: var(--rm-body);
+        box-shadow: none;
+    }
+
+    .rm-button {
+        min-height: 48px;
+        border: 1px solid var(--rm-action);
+        border-radius: 9999px;
+        background: var(--rm-action);
+        color: var(--rm-on-action);
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        line-height: 1;
+        text-transform: uppercase;
+    }
+
+    .rm-input {
+        min-height: 48px;
+        border: 1px solid var(--rm-hairline);
+        border-radius: 9999px;
+        background: var(--rm-surface);
+        color: var(--rm-ink);
+        font-weight: 300;
+    }
+
+    .rm-button-outline {
+        min-height: 48px;
+        border: 1px solid var(--rm-action);
+        border-radius: 9999px;
+        background: transparent;
+        color: var(--rm-action);
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        line-height: 1;
+        text-transform: uppercase;
+    }
+
+    .rm-button-warning {
+        border-color: #f2c300;
+        background: #f2c300;
+        color: #111111;
+    }
+
+    .rm-button-danger {
+        border-color: var(--rm-accent-red);
+        background: var(--rm-accent-red);
+        color: #ffffff;
+    }
+
+    .rm-button-success {
+        border-color: #178a4b;
+        background: #178a4b;
+        color: #ffffff;
+    }
+
+    .rm-table-shell {
+        overflow: hidden;
+        border: 1px solid var(--rm-hairline);
+        background: var(--rm-surface);
+    }
+
+    .rm-table-head {
+        background: var(--rm-surface-soft);
+        color: var(--rm-ink);
+    }
+
+    .rm-status-pill {
+        border-radius: 9999px;
+        background: var(--rm-surface-soft);
+        color: var(--rm-ink);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        line-height: 1;
+        text-transform: uppercase;
+    }
+
+    .rm-brand-strip {
+        background: linear-gradient(
+            90deg,
+            var(--rm-m-blue-light) 0 45%,
+            var(--rm-m-blue-dark) 45% 78%,
+            var(--rm-accent-red) 78% 100%
+        );
+    }
+}
+
+html.dark .bg-gray-50,
+html.dark .bg-gray-100 {
+    background-color: var(--rm-canvas) !important;
+}
+
+html.dark .bg-white,
+html.dark .rounded-lg.bg-white,
+html.dark .rounded-xl.bg-white,
+html.dark .overflow-hidden.bg-white,
+html.dark form.bg-white {
+    background-color: var(--rm-surface) !important;
+}
+
+html.dark .bg-gray-100,
+html.dark thead.bg-gray-100 {
+    background-color: var(--rm-surface-soft) !important;
+}
+
+html.dark .bg-gray-700,
+html.dark .bg-gray-800,
+html.dark .bg-gray-900,
+html.dark .bg-blue-600,
+html.dark .hover\:bg-blue-700:hover {
+    background-color: var(--rm-action) !important;
+}
+
+html.dark .text-gray-900,
+html.dark .text-gray-800,
+html.dark .text-black,
+html.dark .text-white {
+    color: var(--rm-ink) !important;
+}
+
+html.dark .text-gray-700,
+html.dark .text-gray-600,
+html.dark .text-gray-500,
+html.dark .text-gray-400 {
+    color: var(--rm-body) !important;
+}
+
+html.dark .border,
+html.dark .border-t,
+html.dark .border-b,
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-gray-300,
+html.dark .ring-gray-200,
+html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--rm-hairline) !important;
+    --tw-ring-color: var(--rm-hairline) !important;
+}
+
+html.dark .shadow,
+html.dark .shadow-sm,
+html.dark .shadow-md,
+html.dark .shadow-lg,
+html.dark .shadow-xl {
+    box-shadow: none !important;
+}
+
+html.dark .rounded,
+html.dark .rounded-md,
+html.dark .rounded-lg,
+html.dark .rounded-xl,
+html.dark .sm\:rounded-lg {
+    border-radius: 0 !important;
+}
+
+html.dark .rounded-full {
+    border-radius: 9999px !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+    background-color: var(--rm-surface) !important;
+    border-color: var(--rm-hairline) !important;
+    color: var(--rm-ink) !important;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+    border-color: var(--rm-ink) !important;
+    box-shadow: 0 0 0 1px var(--rm-ink) !important;
+    --tw-ring-color: var(--rm-ink) !important;
+}
+
+html.dark button,
+html.dark a[class*="bg-blue"],
+html.dark a[class*="bg-gray-700"],
+html.dark button[class*="bg-gray-800"] {
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}

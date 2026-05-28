@@ -8,12 +8,25 @@ use Inertia\Inertia;
 
 class DoctorController extends Controller
 {
-    public function index()
+    public function index(Request $request)
         {
-            $doctors = Doctor::latest()->get();
+            $search = $request->search;
+
+            $doctors = Doctor::query()
+                ->when($search, function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('specialist', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                })
+                ->latest()
+                ->paginate(5)
+                ->withQueryString();
 
             return Inertia::render('Doctors/Index', [
-                'doctors' => $doctors
+                'doctors' => $doctors,
+                'filters' => [
+                    'search' => $search,
+                ],
             ]);
         }
 

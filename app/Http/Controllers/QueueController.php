@@ -10,28 +10,49 @@ use Inertia\Inertia;
 
 class QueueController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->search;
+        $status = $request->status;
+
         $query = Queue::with([
             'patient',
             'doctor'
         ]);
 
-        if (request('status')) {
+        if ($status) {
 
             $query->where(
                 'status',
-                request('status')
+                $status
             );
 
         }
 
+        $query->when($search, function ($query) use ($search) {
+            $query->where(function ($query) use ($search) {
+                $query->where('queue_number', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhereHas('patient', function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('doctor', function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search}%");
+                    });
+            });
+        });
+
         $queues = $query
             ->latest()
-            ->get();
+            ->paginate(5)
+            ->withQueryString();
 
         return Inertia::render('Queues/Index', [
-            'queues' => $queues
+            'queues' => $queues,
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+            ],
         ]);
     }
 

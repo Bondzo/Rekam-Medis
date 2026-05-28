@@ -1,4 +1,5 @@
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import { Pagination, SearchInput } from '@/Components/IndexControls';
 import { Head, Link } from '@inertiajs/react';
 
 type PrescriptionItem = {
@@ -28,10 +29,16 @@ type Prescription = {
 };
 
 type Props = {
-    prescriptions: Prescription[];
+    prescriptions: {
+        data: Prescription[];
+        links: any[];
+    };
+    filters: {
+        search: string;
+    };
 };
 
-export default function Index({ prescriptions }: Props) {
+export default function Index({ prescriptions, filters }: Props) {
     return (
         <DashboardLayout>
             <Head title="Prescriptions" />
@@ -52,18 +59,22 @@ export default function Index({ prescriptions }: Props) {
 
                     <Link
                         href={route('prescriptions.create')}
-                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        className="rm-button inline-flex items-center px-5"
                     >
-                        + Create Prescription
+                        Create Prescription
                     </Link>
 
                 </div>
 
-                <div className="overflow-hidden rounded-xl bg-white shadow">
+                <div className="mb-4">
+                    <SearchInput routeName="/prescriptions" placeholder="Search prescription..." value={filters.search} />
+                </div>
+
+                <div className="rm-table-shell">
 
                     <table className="w-full border-collapse">
 
-                        <thead className="bg-gray-100">
+                        <thead className="rm-table-head">
                             <tr>
 
                                 <th className="px-4 py-3 text-left text-sm font-semibold">
@@ -91,9 +102,9 @@ export default function Index({ prescriptions }: Props) {
 
                         <tbody>
 
-                            {prescriptions.length > 0 ? (
+                            {prescriptions.data.length > 0 ? (
 
-                                prescriptions.map((prescription) => {
+                                prescriptions.data.map((prescription) => {
 
                                     const total = prescription.items.reduce(
                                         (sum, item) => sum + Number(item.subtotal),
@@ -168,6 +179,8 @@ export default function Index({ prescriptions }: Props) {
                         </tbody>
 
                     </table>
+
+                    <Pagination links={prescriptions.links} />
 
                 </div>
 

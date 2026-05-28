@@ -19,94 +19,122 @@ class DashboardController extends Controller
         $user = auth()->user();
         $today = Carbon::today();
 
-        if ($user->role === 'doctor') {
-            // TODO: Replace this name lookup with a doctors.user_id relation when available.
-            $doctor = Doctor::where('name', $user->name)->first();
-            $doctorId = $doctor?->id;
+        switch ($user->role) {
+            case 'doctor':
+                // TODO: Replace this name lookup with a doctors.user_id relation when available.
+                $doctor = Doctor::where('name', $user->name)->first();
+                $doctorId = $doctor?->id;
 
-            $todayQueues = Queue::with(['patient:id,name'])
-                ->where('doctor_id', $doctorId)
-                ->whereDate('queue_date', $today)
-                ->latest()
-                ->get();
+                $todayQueuesQuery = Queue::where('doctor_id', $doctorId)
+                    ->whereDate('queue_date', $today);
 
-            return Inertia::render(
-                'Dashboard',
-                [
-                    'role' => 'doctor',
-                    'doctorName' => $doctor?->name ?? $user->name,
-                    'todayQueues' => $todayQueues,
-                    'totalWaitingQueues' => Queue::where('doctor_id', $doctorId)
-                        ->whereDate('queue_date', $today)
-                        ->where('status', 'waiting')
-                        ->count(),
-                    'totalCheckingQueues' => Queue::where('doctor_id', $doctorId)
-                        ->whereDate('queue_date', $today)
-                        ->where('status', 'checking')
-                        ->count(),
-                    'totalDoneQueues' => Queue::where('doctor_id', $doctorId)
-                        ->whereDate('queue_date', $today)
-                        ->where('status', 'done')
-                        ->count(),
-                    'totalMedicalRecords' => MedicalRecord::where('doctor_id', $doctorId)->count(),
-                    'recentQueues' => Queue::with(['patient:id,name'])
-                        ->where('doctor_id', $doctorId)
-                        ->latest()
-                        ->take(5)
-                        ->get(),
-                ]
-            );
+                $todayMedicalRecordsQuery = MedicalRecord::where('doctor_id', $doctorId)
+                    ->whereDate('record_date', $today);
+
+                $todayPrescriptionsQuery = Prescription::whereDate('created_at', $today)
+                    ->whereHas('medicalRecord', function ($query) use ($doctorId) {
+                        $query->where('doctor_id', $doctorId);
+                    });
+
+                return Inertia::render(
+                    'Dashboard',
+                    [
+                        'role' => 'doctor',
+                        'doctorName' => $doctor?->name ?? $user->name,
+                        'todayQueues' => (clone $todayQueuesQuery)
+                            ->with(['patient:id,name'])
+                            ->latest()
+                            ->get(),
+                        'totalWaitingQueuesToday' => (clone $todayQueuesQuery)
+                            ->where('status', 'waiting')
+                            ->count(),
+                        'totalCheckingQueuesToday' => (clone $todayQueuesQuery)
+                            ->where('status', 'checking')
+                            ->count(),
+                        'totalDoneQueuesToday' => (clone $todayQueuesQuery)
+                            ->where('status', 'done')
+                            ->count(),
+                        'totalMedicalRecordsToday' => (clone $todayMedicalRecordsQuery)->count(),
+                        'totalPrescriptionsToday' => (clone $todayPrescriptionsQuery)->count(),
+                        'recentQueues' => (clone $todayQueuesQuery)
+                            ->with(['patient:id,name'])
+                            ->latest()
+                            ->take(5)
+                            ->get(),
+                        'recentMedicalRecords' => (clone $todayMedicalRecordsQuery)
+                            ->with(['patient:id,name'])
+                            ->latest()
+                            ->take(5)
+                            ->get(),
+                    ]
+                );
+
+            case 'staff':
+                $todayQueuesQuery = Queue::whereDate('queue_date', $today);
+                $todayPaymentsQuery = Payment::whereDate('payment_date', $today);
+
+                return Inertia::render(
+                    'Dashboard',
+                    [
+                        'role' => 'staff',
+                        'patientsRegisteredToday' => Patient::whereDate('created_at', $today)->count(),
+                        'totalQueuesToday' => (clone $todayQueuesQuery)->count(),
+                        'totalWaitingQueuesToday' => (clone $todayQueuesQuery)
+                            ->where('status', 'waiting')
+                            ->count(),
+                        'totalCheckingQueuesToday' => (clone $todayQueuesQuery)
+                            ->where('status', 'checking')
+                            ->count(),
+                        'totalDoneQueuesToday' => (clone $todayQueuesQuery)
+                            ->where('status', 'done')
+                            ->count(),
+                        'totalUnpaidPaymentsToday' => (clone $todayPaymentsQuery)
+                            ->where('status', 'unpaid')
+                            ->count(),
+                        'totalPaidPaymentsToday' => (clone $todayPaymentsQuery)
+                            ->where('status', 'paid')
+                            ->count(),
+                        'incomeToday' => (clone $todayPaymentsQuery)
+                            ->where('status', 'paid')
+                            ->sum('total_payment'),
+                        'totalLowStockMedicines' => Medicine::where('stock', '<=', 10)->count(),
+                        'recentQueues' => (clone $todayQueuesQuery)
+                            ->with(['patient:id,name', 'doctor:id,name'])
+                            ->latest()
+                            ->take(5)
+                            ->get(),
+                        'recentPayments' => (clone $todayPaymentsQuery)
+                            ->with(['medicalRecord.patient:id,name'])
+                            ->latest()
+                            ->take(5)
+                            ->get(),
+                    ]
+                );
+
+            default:
+                return Inertia::render(
+                    'Dashboard',
+                    [
+                        'role' => 'admin',
+                        'totalPatients' => Patient::count(),
+                        'totalDoctors' => Doctor::count(),
+                        'totalQueues' => Queue::count(),
+                        'totalQueuesToday' => Queue::whereDate('queue_date', $today)->count(),
+                        'totalMedicalRecords' => MedicalRecord::count(),
+                        'totalMedicines' => Medicine::count(),
+                        'totalPrescriptions' => Prescription::count(),
+                        'totalPayments' => Payment::count(),
+                        'totalIncomePaid' => Payment::where('status', 'paid')->sum('total_payment'),
+                        'recentQueues' => Queue::with(['patient:id,name', 'doctor:id,name'])
+                            ->latest()
+                            ->paginate(5, ['*'], 'recent_queues_page')
+                            ->withQueryString(),
+                        'recentPayments' => Payment::with(['medicalRecord.patient:id,name'])
+                            ->latest()
+                            ->paginate(5, ['*'], 'recent_payments_page')
+                            ->withQueryString(),
+                    ]
+                );
         }
-
-        if ($user->role === 'staff') {
-            return Inertia::render(
-                'Dashboard',
-                [
-                    'role' => 'staff',
-                    'totalPatients' => Patient::count(),
-                    'totalQueuesToday' => Queue::whereDate('queue_date', $today)->count(),
-                    'totalWaitingQueues' => Queue::whereDate('queue_date', $today)
-                        ->where('status', 'waiting')
-                        ->count(),
-                    'totalMedicines' => Medicine::count(),
-                    'totalLowStockMedicines' => Medicine::where('stock', '<=', 10)->count(),
-                    'totalUnpaidPayments' => Payment::where('status', 'unpaid')->count(),
-                    'totalPaidPaymentsToday' => Payment::where('status', 'paid')
-                        ->whereDate('payment_date', $today)
-                        ->count(),
-                    'recentQueues' => Queue::with(['patient:id,name', 'doctor:id,name'])
-                        ->latest()
-                        ->take(5)
-                        ->get(),
-                    'recentPayments' => Payment::with(['medicalRecord.patient:id,name'])
-                        ->latest()
-                        ->take(5)
-                        ->get(),
-                ]
-            );
-        }
-
-        return Inertia::render(
-            'Dashboard',
-            [
-                'role' => 'admin',
-                'totalPatients' => Patient::count(),
-                'totalDoctors' => Doctor::count(),
-                'totalQueuesToday' => Queue::whereDate('queue_date', $today)->count(),
-                'totalMedicalRecords' => MedicalRecord::count(),
-                'totalMedicines' => Medicine::count(),
-                'totalPrescriptions' => Prescription::count(),
-                'totalPayments' => Payment::count(),
-                'totalIncomePaid' => Payment::where('status', 'paid')->sum('total_payment'),
-                'recentQueues' => Queue::with(['patient:id,name', 'doctor:id,name'])
-                    ->latest()
-                    ->take(5)
-                    ->get(),
-                'recentPayments' => Payment::with(['medicalRecord.patient:id,name'])
-                    ->latest()
-                    ->take(5)
-                    ->get(),
-            ]
-        );
     }
 }

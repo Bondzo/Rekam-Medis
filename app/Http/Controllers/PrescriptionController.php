@@ -13,16 +13,37 @@ use Inertia\Inertia;
 
 class PrescriptionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->search;
+
         $prescriptions = Prescription::with([
             'medicalRecord.patient',
             'medicalRecord.doctor',
             'items.medicine',
-        ])->latest()->get();
+        ])
+            ->when($search, function ($query) use ($search) {
+                $query->where('notes', 'like', "%{$search}%")
+                    ->orWhereHas('medicalRecord.patient', function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search}%")
+                            ->orWhere('medical_record_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('medicalRecord.doctor', function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('items.medicine', function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search}%");
+                    });
+            })
+            ->latest()
+            ->paginate(5)
+            ->withQueryString();
 
         return Inertia::render('Prescriptions/Index', [
             'prescriptions' => $prescriptions,
+            'filters' => [
+                'search' => $search,
+            ],
         ]);
     }
 

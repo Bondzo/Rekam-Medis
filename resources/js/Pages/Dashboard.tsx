@@ -1,4 +1,6 @@
 import { Link } from "@inertiajs/react";
+import { Pagination } from "../Components/IndexControls";
+import { ArrowRight, BarChart3, ClipboardList, CreditCard, ListChecks } from "lucide-react";
 import DashboardLayout from "../Layouts/DashboardLayout";
 
 type Role = "admin" | "doctor" | "staff";
@@ -32,26 +34,44 @@ type Payment = {
     } | null;
 };
 
+type MedicalRecord = {
+    id: number;
+    diagnosis: string;
+    record_date: string;
+    patient?: Patient | null;
+};
+
+type Paginated<T> = {
+    data: T[];
+    links: any[];
+};
+
 type Props = {
     role: Role;
     doctorName?: string;
+    patientsRegisteredToday?: number;
     totalPatients?: number;
     totalDoctors?: number;
+    totalQueues?: number;
     totalQueuesToday?: number;
     totalMedicalRecords?: number;
+    totalMedicalRecordsToday?: number;
     totalMedicines?: number;
     totalPrescriptions?: number;
+    totalPrescriptionsToday?: number;
     totalPayments?: number;
     totalIncomePaid?: number | string;
-    totalWaitingQueues?: number;
-    totalCheckingQueues?: number;
-    totalDoneQueues?: number;
+    incomeToday?: number | string;
+    totalWaitingQueuesToday?: number;
+    totalCheckingQueuesToday?: number;
+    totalDoneQueuesToday?: number;
     totalLowStockMedicines?: number;
-    totalUnpaidPayments?: number;
+    totalUnpaidPaymentsToday?: number;
     totalPaidPaymentsToday?: number;
     todayQueues?: Queue[];
-    recentQueues?: Queue[];
-    recentPayments?: Payment[];
+    recentQueues?: Queue[] | Paginated<Queue>;
+    recentMedicalRecords?: MedicalRecord[];
+    recentPayments?: Payment[] | Paginated<Payment>;
 };
 
 const formatCurrency = (value: number | string | undefined) =>
@@ -64,14 +84,36 @@ const formatCurrency = (value: number | string | undefined) =>
 function StatCard({
     label,
     value,
+    admin = false,
 }: {
     label: string;
     value: number | string | undefined;
+    admin?: boolean;
 }) {
+    const displayValue = value ?? 0;
+    const isCurrencyValue = String(displayValue).startsWith("Rp");
+    const valueLength = String(displayValue).length;
+    const valueSizeClass =
+        isCurrencyValue
+            ? "text-[clamp(1.45rem,1.8vw,1.875rem)]"
+            : valueLength > 12
+            ? "text-2xl xl:text-[1.7rem]"
+            : valueLength > 8
+              ? "text-3xl xl:text-[2rem]"
+              : "text-4xl";
+
     return (
-        <div className="rounded-lg bg-white p-5 shadow-sm ring-1 ring-gray-200">
-            <p className="text-sm font-medium text-gray-500">{label}</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900">{value ?? 0}</p>
+        <div className={`relative flex min-h-[180px] w-full bg-white p-6 shadow-sm ring-1 ring-gray-200 sm:w-[calc(50%-8px)] dark:bg-[#1a1a1a] dark:ring-[#3c3c3c] ${admin ? "lg:w-[calc(33.333%-11px)]" : "lg:w-[calc(25%-12px)] xl:w-[calc(20%-13px)]"}`}>
+            <div className="rm-brand-strip absolute inset-x-0 top-0 h-1" />
+            <div className="flex w-full flex-col justify-between">
+                <div className="flex items-start justify-between gap-4">
+                    <p className="max-w-[11rem] text-base font-medium leading-6 text-gray-600 dark:text-[#d7d7d7]">{label}</p>
+                    <BarChart3 className="h-6 w-6 shrink-0 text-[var(--rm-ink)]" strokeWidth={2} />
+                </div>
+                <p className={`mt-8 max-w-full whitespace-nowrap font-bold leading-none tracking-normal text-gray-900 dark:text-white ${valueSizeClass}`}>
+                    {displayValue}
+                </p>
+            </div>
         </div>
     );
 }
@@ -80,9 +122,10 @@ function QuickAction({ href, label }: { href: string; label: string }) {
     return (
         <Link
             href={href}
-            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+            className="inline-flex min-h-12 items-center gap-2 bg-[var(--rm-action)] px-4 py-2 text-sm font-bold uppercase tracking-[0.5px] text-white shadow-none hover:bg-[var(--rm-action-active)]"
         >
             {label}
+            <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
         </Link>
     );
 }
@@ -92,60 +135,120 @@ function RecentQueues({
     queues,
 }: {
     title?: string;
-    queues?: Queue[];
+    queues?: Queue[] | Paginated<Queue>;
 }) {
+    const queueData = Array.isArray(queues) ? queues : queues?.data;
+    const links = Array.isArray(queues) ? undefined : queues?.links;
+
     return (
-        <div className="rounded-lg bg-white p-5 shadow-sm ring-1 ring-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <div className="bg-white p-5 shadow-sm ring-1 ring-gray-200 dark:bg-[#1a1a1a] dark:ring-[#3c3c3c]">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+                <ListChecks className="h-5 w-5 text-[var(--rm-action)]" strokeWidth={1.8} />
+                {title}
+            </h2>
 
             <div className="mt-4 divide-y divide-gray-100">
-                {queues && queues.length > 0 ? (
-                    queues.map((queue) => (
+                {queueData && queueData.length > 0 ? (
+                    queueData.map((queue) => (
                         <div key={queue.id} className="flex items-center justify-between py-3">
                             <div>
-                                <p className="font-semibold text-gray-900">{queue.queue_number}</p>
-                                <p className="text-sm text-gray-500">
+                                <p className="font-semibold text-gray-900 dark:text-white">{queue.queue_number}</p>
+                                <p className="text-sm text-gray-500 dark:text-[#bbbbbb]">
                                     {queue.patient?.name ?? "-"}
                                     {queue.doctor?.name ? ` - ${queue.doctor.name}` : ""}
                                 </p>
                             </div>
-                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium uppercase text-gray-700">
+                            <span className={`rm-status-pill px-3 py-2 ${
+                                queue.status === "done"
+                                    ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
+                                    : ""
+                            }`}>
                                 {queue.status}
                             </span>
                         </div>
                     ))
                 ) : (
-                    <p className="py-3 text-sm text-gray-500">No queue data.</p>
+                    <p className="py-3 text-sm text-gray-500 dark:text-[#7e7e7e]">No queue data.</p>
                 )}
             </div>
+
+            <Pagination links={links} />
         </div>
     );
 }
 
-function RecentPayments({ payments }: { payments?: Payment[] }) {
+function RecentPayments({
+    title = "Recent Payments",
+    payments,
+}: {
+    title?: string;
+    payments?: Payment[] | Paginated<Payment>;
+}) {
+    const paymentData = Array.isArray(payments) ? payments : payments?.data;
+    const links = Array.isArray(payments) ? undefined : payments?.links;
+
     return (
-        <div className="rounded-lg bg-white p-5 shadow-sm ring-1 ring-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Payments</h2>
+        <div className="bg-white p-5 shadow-sm ring-1 ring-gray-200 dark:bg-[#1a1a1a] dark:ring-[#3c3c3c]">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+                <CreditCard className="h-5 w-5 text-[var(--rm-action)]" strokeWidth={1.8} />
+                {title}
+            </h2>
 
             <div className="mt-4 divide-y divide-gray-100">
-                {payments && payments.length > 0 ? (
-                    payments.map((payment) => (
+                {paymentData && paymentData.length > 0 ? (
+                    paymentData.map((payment) => (
                         <div key={payment.id} className="flex items-center justify-between py-3">
                             <div>
-                                <p className="font-semibold text-gray-900">
+                                <p className="font-semibold text-gray-900 dark:text-white">
                                     {payment.medical_record?.patient?.name ?? "-"}
                                 </p>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-gray-500 dark:text-[#bbbbbb]">
                                     {formatCurrency(payment.total_payment)}
                                 </p>
                             </div>
-                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium uppercase text-gray-700">
+                            <span className={`rm-status-pill px-3 py-2 ${
+                                payment.status === "paid"
+                                    ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
+                                    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300"
+                            }`}>
                                 {payment.status}
                             </span>
                         </div>
                     ))
                 ) : (
-                    <p className="py-3 text-sm text-gray-500">No payment data.</p>
+                    <p className="py-3 text-sm text-gray-500 dark:text-[#7e7e7e]">No payment data.</p>
+                )}
+            </div>
+
+            <Pagination links={links} />
+        </div>
+    );
+}
+
+function RecentMedicalRecords({ records }: { records?: MedicalRecord[] }) {
+    return (
+        <div className="bg-white p-5 shadow-sm ring-1 ring-gray-200 dark:bg-[#1a1a1a] dark:ring-[#3c3c3c]">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+                <ClipboardList className="h-5 w-5 text-[var(--rm-action)]" strokeWidth={1.8} />
+                Recent Medical Records Today
+            </h2>
+
+            <div className="mt-4 divide-y divide-gray-100">
+                {records && records.length > 0 ? (
+                    records.map((record) => (
+                        <div key={record.id} className="py-3">
+                            <p className="font-semibold text-gray-900 dark:text-white">
+                                {record.patient?.name ?? "-"}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-[#bbbbbb]">
+                                {record.diagnosis || "No diagnosis"}
+                            </p>
+                        </div>
+                    ))
+                ) : (
+                    <p className="py-3 text-sm text-gray-500 dark:text-[#7e7e7e]">
+                        No medical record data today.
+                    </p>
                 )}
             </div>
         </div>
@@ -155,10 +258,8 @@ function RecentPayments({ payments }: { payments?: Payment[] }) {
 function AdminDashboard({
     totalPatients,
     totalDoctors,
-    totalQueuesToday,
     totalMedicalRecords,
     totalMedicines,
-    totalPrescriptions,
     totalPayments,
     totalIncomePaid,
     recentQueues,
@@ -166,15 +267,13 @@ function AdminDashboard({
 }: Props) {
     return (
         <>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard label="Total Patients" value={totalPatients} />
-                <StatCard label="Total Doctors" value={totalDoctors} />
-                <StatCard label="Queues Today" value={totalQueuesToday} />
-                <StatCard label="Medical Records" value={totalMedicalRecords} />
-                <StatCard label="Medicines" value={totalMedicines} />
-                <StatCard label="Prescriptions" value={totalPrescriptions} />
-                <StatCard label="Payments" value={totalPayments} />
-                <StatCard label="Income Paid" value={formatCurrency(totalIncomePaid)} />
+            <div className="flex flex-wrap justify-center gap-4">
+                <StatCard admin label="Total Patients" value={totalPatients} />
+                <StatCard admin label="Total Doctors" value={totalDoctors} />
+                <StatCard admin label="Total Medical Records" value={totalMedicalRecords} />
+                <StatCard admin label="Total Medicines" value={totalMedicines} />
+                <StatCard admin label="Total Payments" value={totalPayments} />
+                <StatCard admin label="Total Paid Income" value={formatCurrency(totalIncomePaid)} />
             </div>
 
             <div className="mt-6 grid gap-6 xl:grid-cols-2">
@@ -188,46 +287,51 @@ function AdminDashboard({
 function DoctorDashboard({
     doctorName,
     todayQueues,
-    totalWaitingQueues,
-    totalCheckingQueues,
-    totalDoneQueues,
-    totalMedicalRecords,
-    recentQueues,
+    totalWaitingQueuesToday,
+    totalCheckingQueuesToday,
+    totalDoneQueuesToday,
+    totalMedicalRecordsToday,
+    totalPrescriptionsToday,
+    recentMedicalRecords,
 }: Props) {
     return (
         <>
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-gray-500">Doctor: {doctorName ?? "-"}</p>
+                <p className="text-sm text-gray-500 dark:text-[#bbbbbb]">Doctor: {doctorName ?? "-"}</p>
                 <div className="flex flex-wrap gap-2">
-                    <QuickAction href="/queues" label="Open Queues" />
+                    <QuickAction href="/queues" label="Queues" />
                     <QuickAction href="/medical-records" label="Medical Records" />
+                    <QuickAction href="/prescriptions" label="Prescriptions" />
                 </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="flex flex-wrap justify-center gap-4">
                 <StatCard label="Queues Today" value={todayQueues?.length ?? 0} />
-                <StatCard label="Waiting" value={totalWaitingQueues} />
-                <StatCard label="Checking" value={totalCheckingQueues} />
-                <StatCard label="Done" value={totalDoneQueues} />
-                <StatCard label="Medical Records Created" value={totalMedicalRecords} />
+                <StatCard label="Waiting Today" value={totalWaitingQueuesToday} />
+                <StatCard label="Checking Today" value={totalCheckingQueuesToday} />
+                <StatCard label="Done Today" value={totalDoneQueuesToday} />
+                <StatCard label="Medical Records Today" value={totalMedicalRecordsToday} />
+                <StatCard label="Prescriptions Today" value={totalPrescriptionsToday} />
             </div>
 
             <div className="mt-6 grid gap-6 xl:grid-cols-2">
                 <RecentQueues title="Queues Today" queues={todayQueues} />
-                <RecentQueues queues={recentQueues} />
+                <RecentMedicalRecords records={recentMedicalRecords} />
             </div>
         </>
     );
 }
 
 function StaffDashboard({
-    totalPatients,
+    patientsRegisteredToday,
     totalQueuesToday,
-    totalWaitingQueues,
-    totalMedicines,
+    totalWaitingQueuesToday,
+    totalCheckingQueuesToday,
+    totalDoneQueuesToday,
     totalLowStockMedicines,
-    totalUnpaidPayments,
+    totalUnpaidPaymentsToday,
     totalPaidPaymentsToday,
+    incomeToday,
     recentQueues,
     recentPayments,
 }: Props) {
@@ -236,22 +340,25 @@ function StaffDashboard({
             <div className="mb-6 flex flex-wrap gap-2">
                 <QuickAction href="/patients" label="Patients" />
                 <QuickAction href="/queues" label="Queues" />
+                <QuickAction href="/medicines" label="Medicines" />
                 <QuickAction href="/payments" label="Payments" />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard label="Total Patients" value={totalPatients} />
+            <div className="flex flex-wrap justify-center gap-4">
+                <StatCard label="Patients Registered Today" value={patientsRegisteredToday} />
                 <StatCard label="Queues Today" value={totalQueuesToday} />
-                <StatCard label="Waiting Queue" value={totalWaitingQueues} />
-                <StatCard label="Medicines" value={totalMedicines} />
-                <StatCard label="Low Stock Medicines" value={totalLowStockMedicines} />
-                <StatCard label="Unpaid Payments" value={totalUnpaidPayments} />
+                <StatCard label="Waiting Queues Today" value={totalWaitingQueuesToday} />
+                <StatCard label="Checking Queues Today" value={totalCheckingQueuesToday} />
+                <StatCard label="Done Queues Today" value={totalDoneQueuesToday} />
+                <StatCard label="Unpaid Payments Today" value={totalUnpaidPaymentsToday} />
                 <StatCard label="Paid Payments Today" value={totalPaidPaymentsToday} />
+                <StatCard label="Income Today" value={formatCurrency(incomeToday)} />
+                <StatCard label="Low Stock Medicines" value={totalLowStockMedicines} />
             </div>
 
             <div className="mt-6 grid gap-6 xl:grid-cols-2">
-                <RecentQueues queues={recentQueues} />
-                <RecentPayments payments={recentPayments} />
+                <RecentQueues title="Recent Queues Today" queues={recentQueues} />
+                <RecentPayments title="Recent Payments Today" payments={recentPayments} />
             </div>
         </>
     );
@@ -261,7 +368,11 @@ export default function Dashboard(props: Props) {
     return (
         <DashboardLayout>
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                <p className="mb-2 text-xs font-bold uppercase tracking-[1.5px] text-[var(--rm-action)]">
+                    Rekam Medis
+                </p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+                <div className="rm-brand-strip mt-4 h-1 w-32" />
             </div>
 
             {props.role === "doctor" && <DoctorDashboard {...props} />}

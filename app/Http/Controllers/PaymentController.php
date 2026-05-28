@@ -13,16 +13,35 @@ use Midtrans\Snap;
 
 class PaymentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->search;
+
         $payments = Payment::with([
             'medicalRecord.patient',
             'medicalRecord.doctor',
             'medicalRecord.prescription.items.medicine',
-        ])->latest()->get();
+        ])
+            ->when($search, function ($query) use ($search) {
+                $query->where('status', 'like', "%{$search}%")
+                    ->orWhere('payment_method', 'like', "%{$search}%")
+                    ->orWhereHas('medicalRecord.patient', function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search}%")
+                            ->orWhere('medical_record_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('medicalRecord.doctor', function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search}%");
+                    });
+            })
+            ->latest()
+            ->paginate(5)
+            ->withQueryString();
 
         return Inertia::render('Payments/Index', [
             'payments' => $payments,
+            'filters' => [
+                'search' => $search,
+            ],
         ]);
     }
 

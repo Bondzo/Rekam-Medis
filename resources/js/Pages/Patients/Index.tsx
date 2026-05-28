@@ -1,6 +1,7 @@
 import DashboardLayout from "../../Layouts/DashboardLayout";
 import { Patient } from "../../types/patient";
 import { Link, router } from "@inertiajs/react";
+import { Pagination, SearchInput } from "../../Components/IndexControls";
 
 type Props = {
     patients: {
@@ -36,10 +37,7 @@ export default function Index({
                     Patients
                 </h1>
 
-                <Link
-                    href="/patients/create"
-                    className="bg-blue-600 text-white px-4 py-2 rounded border border-black"
-                >
+                <Link href="/patients/create" className="rm-button inline-flex items-center px-5">
                     Add Patient
                 </Link>
 
@@ -47,32 +45,15 @@ export default function Index({
 
             <div className="mb-4">
 
-                <input
-                    type="text"
-                    placeholder="Search patient..."
-                    defaultValue={filters.search}
-                    onChange={(e) =>
-                        router.get(
-                            "/patients",
-                            {
-                                search: e.target.value,
-                            },
-                            {
-                                preserveState: true,
-                                replace: true,
-                            }
-                        )
-                    }
-                    className="w-full border rounded-lg p-2"
-                />
+                <SearchInput routeName="/patients" placeholder="Search patient..." value={filters.search} />
 
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="rm-table-shell">
 
                 <table className="w-full">
 
-                    <thead className="bg-gray-100">
+                    <thead className="rm-table-head">
 
                         <tr>
 
@@ -128,14 +109,14 @@ export default function Index({
 
                                     <Link
                                         href={`/patients/${patient.id}/edit`}
-                                        className="inline-block bg-yellow-500 hover:bg-yellow-600 text-black font-medium px-3 py-1 rounded-lg border border-yellow-700"
+                                        className="rm-button inline-flex min-h-10 items-center px-4 text-xs"
                                     >
                                         Edit
                                     </Link>
 
                                     <button
                                         onClick={() => handleDelete(patient.id)}
-                                        className="bg-red-600 text-white px-3 py-1 rounded"
+                                        className="rm-button rm-button-danger min-h-10 px-4 text-xs"
                                     >
                                         Delete
                                     </button>
@@ -150,29 +131,7 @@ export default function Index({
 
                 </table>
 
-                <div className="mt-4 flex gap-2">
-
-                {patients.links?.map((link: any, index: number) => (
-
-                    <button
-                        key={index}
-                        disabled={!link.url}
-                        onClick={() => {
-
-                            if (link.url) {
-                                router.visit(link.url);
-                            }
-
-                        }}
-                        className="px-3 py-1 border rounded"
-                        dangerouslySetInnerHTML={{
-                            __html: link.label
-                        }}
-                    />
-
-                ))}
-
-            </div>
+                <Pagination links={patients.links} />
 
             </div>
 

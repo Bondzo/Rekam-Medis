@@ -1,173 +1,137 @@
+import { Pagination, SearchInput } from "../../Components/IndexControls";
 import DashboardLayout from "../../Layouts/DashboardLayout";
-import { Link, router } from "@inertiajs/react";
-import { usePage } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 
-type Props = {
-    queues: any[];
+type Queue = {
+    id: number;
+    queue_number: string;
+    status: "waiting" | "checking" | "done" | string;
+    patient?: {
+        name: string;
+    } | null;
+    doctor?: {
+        name: string;
+    } | null;
 };
 
-function updateStatus(
-    id: number,
-    status: string
-) {
-    router.put(
-        `/queues/${id}/status`,
-        {
-            status,
-        }
-    );
+type Props = {
+    queues: {
+        data: Queue[];
+        links: any[];
+    };
+    filters: {
+        search: string;
+        status?: string | null;
+    };
+};
+
+const statusFilters = [
+    { label: "All", value: undefined, className: "rm-button-outline" },
+    { label: "Waiting", value: "waiting", className: "rm-button rm-button-warning" },
+    { label: "Checking", value: "checking", className: "rm-button" },
+    { label: "Done", value: "done", className: "rm-button rm-button-success" },
+];
+
+function updateStatus(id: number, status: string) {
+    router.put(`/queues/${id}/status`, { status });
 }
 
 function handleDelete(id: number) {
-
-    if (
-        confirm("Delete queue?")
-    ) {
-        router.delete(
-            `/queues/${id}`
-        );
+    if (confirm("Delete queue?")) {
+        router.delete(`/queues/${id}`);
     }
 }
 
-export default function Index({ queues }: Props) {
-
+export default function Index({ queues, filters }: Props) {
     const { auth } = usePage().props as any;
-
     const user = auth.user;
 
     return (
         <DashboardLayout>
-
-            <div className="flex justify-between items-center mb-6">
-
-                <h1 className="text-3xl font-bold">
-                    Queues
-                </h1>
+            <div className="mb-6 flex items-center justify-between gap-4">
+                <h1 className="text-3xl font-bold">Queues</h1>
 
                 {user.role !== "doctor" && (
-
-                <Link
-                    href="/queues/create"
-                    className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg"
-                >
-                    Add Queue
-                </Link>
+                    <Link href="/queues/create" className="rm-button inline-flex items-center px-5">
+                        Add Queue
+                    </Link>
                 )}
-
             </div>
 
-            <div className="mb-4 flex gap-2">
+            <div className="mb-4">
+                <SearchInput
+                    routeName="/queues"
+                    placeholder="Search queue..."
+                    value={filters.search}
+                    extraParams={{ status: filters.status }}
+                />
+            </div>
 
-            <button
-                onClick={() =>
-                    router.get("/queues")
-                }
-                className="bg-gray-300 px-3 py-1 rounded"
-            >
-                All
-            </button>
+            <div className="mb-5 flex flex-wrap gap-2">
+                {statusFilters.map((item) => {
+                    const active = (filters.status ?? undefined) === item.value;
 
-            <button
-                onClick={() =>
-                    router.get(
-                        "/queues?status=waiting"
-                    )
-                }
-                className="bg-yellow-500 px-3 py-1 rounded"
-            >
-                Waiting
-            </button>
+                    return (
+                        <button
+                            key={item.label}
+                            onClick={() =>
+                                router.get(
+                                    "/queues",
+                                    {
+                                        status: item.value,
+                                        search: filters.search,
+                                    },
+                                    {
+                                        preserveState: true,
+                                        replace: true,
+                                    }
+                                )
+                            }
+                            className={`${item.className} px-5 ${active ? "" : "opacity-80 hover:opacity-100"}`}
+                        >
+                            {item.label}
+                        </button>
+                    );
+                })}
+            </div>
 
-            <button
-                onClick={() =>
-                    router.get(
-                        "/queues?status=checking"
-                    )
-                }
-                className="bg-blue-600 text-white px-3 py-1 rounded-lg"
-            >
-                Checking
-            </button>
-
-            <button
-                onClick={() =>
-                    router.get(
-                        "/queues?status=done"
-                    )
-                }
-                className="bg-blue-600 text-white px-3 py-1 rounded-lg"
-            >
-                Done
-            </button>
-
-        </div>
-
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-
+            <div className="rm-table-shell">
                 <table className="w-full">
-
-                    <thead className="bg-gray-100">
-
+                    <thead className="rm-table-head">
                         <tr>
-
-                            <th className="p-4 text-left">
-                                Queue
-                            </th>
-
-                            <th className="p-4 text-left">
-                                Patient
-                            </th>
-
-                            <th className="p-4 text-left">
-                                Doctor
-                            </th>
-
-                            <th className="p-4 text-left">
-                                Status
-                            </th>
-
-                            <th className="p-4 text-left">
-                                Actions
-                            </th>
-
+                            <th className="p-4 text-left">Queue</th>
+                            <th className="p-4 text-left">Patient</th>
+                            <th className="p-4 text-left">Doctor</th>
+                            <th className="p-4 text-left">Status</th>
+                            <th className="p-4 text-left">Actions</th>
                         </tr>
-                                
-
                     </thead>
 
                     <tbody>
-
-                        {queues.map((queue) => (
-
-                            <tr
-                                key={queue.id}
-                                className="border-t"
-                            >
-
+                        {queues.data.map((queue) => (
+                            <tr key={queue.id} className="border-t">
+                                <td className="p-4">{queue.queue_number}</td>
+                                <td className="p-4">{queue.patient?.name ?? "-"}</td>
+                                <td className="p-4">{queue.doctor?.name ? `Dr. ${queue.doctor.name}` : "-"}</td>
                                 <td className="p-4">
-                                    {queue.queue_number}
+                                    <span
+                                        className={`rm-status-pill inline-flex px-3 py-2 ${
+                                            queue.status === "done"
+                                                ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
+                                                : ""
+                                        }`}
+                                    >
+                                        {queue.status}
+                                    </span>
                                 </td>
 
-                                <td className="p-4">
-                                    {queue.patient?.name}
-                                </td>
-
-                                <td className="p-4">
-                                    Dr. {queue.doctor?.name}
-                                </td>
-                                
-                                <td className="p-4">
-                                    {queue.status}
-                                </td>
-
-                                <td className="p-4 flex gap-2">
-
+                                <td className="flex flex-wrap gap-2 p-4">
                                     {user.role === "doctor" && queue.status !== "done" && (
                                         <Link
                                             href={route("medical-records.create", {
                                                 queue_id: queue.id,
                                             })}
-                                            className="bg-green-600 text-white px-3 py-1 rounded-lg"
+                                            className="rm-button rm-button-success inline-flex min-h-10 items-center px-4 text-xs"
                                         >
                                             Examine
                                         </Link>
@@ -176,46 +140,35 @@ export default function Index({ queues }: Props) {
                                     {user.role !== "doctor" && (
                                         <>
                                             <button
-                                                onClick={() =>
-                                                    updateStatus(queue.id, "checking")
-                                                }
-                                                className="bg-yellow-500 text-black px-3 py-1 rounded-lg"
+                                                onClick={() => updateStatus(queue.id, "checking")}
+                                                className="rm-button rm-button-warning min-h-10 px-4 text-xs"
                                             >
                                                 Checking
                                             </button>
 
                                             <button
-                                                onClick={() =>
-                                                    updateStatus(queue.id, "done")
-                                                }
-                                                className="bg-blue-600 text-white px-3 py-1 rounded-lg"
+                                                onClick={() => updateStatus(queue.id, "done")}
+                                                className="rm-button rm-button-success min-h-10 px-4 text-xs"
                                             >
                                                 Done
                                             </button>
 
                                             <button
-                                                onClick={() =>
-                                                    handleDelete(queue.id)
-                                                }
-                                                className="bg-red-600 text-white px-3 py-1 rounded-lg"
+                                                onClick={() => handleDelete(queue.id)}
+                                                className="rm-button rm-button-danger min-h-10 px-4 text-xs"
                                             >
                                                 Delete
                                             </button>
                                         </>
                                     )}
-
                                 </td>
-
                             </tr>
-
                         ))}
-
                     </tbody>
-
                 </table>
 
+                <Pagination links={queues.links} />
             </div>
-
         </DashboardLayout>
     );
 }

@@ -32,7 +32,7 @@ public function index(Request $request)
 
             ->latest()
 
-            ->paginate(10)
+            ->paginate(5)
 
             ->withQueryString();
 

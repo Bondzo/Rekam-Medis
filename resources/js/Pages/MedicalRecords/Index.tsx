@@ -1,4 +1,5 @@
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import { Pagination, SearchInput } from '@/Components/IndexControls';
 import { Head, Link, router } from '@inertiajs/react';
 
 type MedicalRecord = {
@@ -17,14 +18,20 @@ type MedicalRecord = {
 };
 
 type Props = {
-    records: MedicalRecord[];
+    records: {
+        data: MedicalRecord[];
+        links: any[];
+    };
+    filters: {
+        search: string;
+    };
     auth: {
         user: {
             role: string;
         };
     };
 };
-export default function Index({ records, auth }: Props) {
+export default function Index({ records, filters, auth }: Props) {
     return (
         <DashboardLayout>
             <Head title="Medical Records" />
@@ -42,16 +49,20 @@ export default function Index({ records, auth }: Props) {
 
                     <Link
                         href={route('medical-records.create')}
-                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        className="rm-button inline-flex items-center px-5"
                     >
-                        + Add Record
+                        Add Record
                     </Link>
  
                 </div>
 
-                <div className="overflow-hidden rounded-xl bg-white shadow">
+                <div className="mb-4">
+                    <SearchInput routeName="/medical-records" placeholder="Search medical record..." value={filters.search} />
+                </div>
+
+                <div className="rm-table-shell">
                     <table className="w-full border-collapse">
-                        <thead className="bg-gray-100">
+                        <thead className="rm-table-head">
                             <tr>
                                 <th className="px-4 py-3 text-left text-sm font-semibold">Date</th>
                                 <th className="px-4 py-3 text-left text-sm font-semibold">MR Number</th>
@@ -65,8 +76,8 @@ export default function Index({ records, auth }: Props) {
                         </thead>
 
                         <tbody>
-                            {records.length > 0 ? (
-                                records.map((record) => (
+                            {records.data.length > 0 ? (
+                                records.data.map((record) => (
                                     <tr key={record.id} className="border-t">
                                         <td className="px-4 py-3 text-sm">
                                             {record.record_date}
@@ -93,14 +104,14 @@ export default function Index({ records, auth }: Props) {
 
                                                 <Link
                                                     href={route('medical-records.show', record.id)}
-                                                    className="rounded bg-gray-700 px-3 py-1 text-white"
+                                                    className="rm-button-outline inline-flex min-h-10 items-center px-4 text-xs"
                                                 >
                                                     Detail
                                                 </Link>
 
                                                 <Link
                                                     href={route('medical-records.edit', record.id)}
-                                                    className="rounded bg-yellow-500 px-3 py-1 text-black"
+                                                    className="rm-button inline-flex min-h-10 items-center px-4 text-xs"
                                                 >
                                                     Edit
                                                 </Link>
@@ -114,7 +125,7 @@ export default function Index({ records, auth }: Props) {
                                                                 );
                                                             }
                                                         }}
-                                                        className="rounded bg-red-600 px-3 py-1 text-white"
+                                                        className="rm-button rm-button-danger min-h-10 px-4 text-xs"
                                                     >
                                                         Delete
                                                     </button>
@@ -127,7 +138,7 @@ export default function Index({ records, auth }: Props) {
                             ) : (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={7}
                                         className="px-4 py-6 text-center text-sm text-gray-500"
                                     >
                                         No medical records found.
@@ -136,6 +147,8 @@ export default function Index({ records, auth }: Props) {
                             )}
                         </tbody>
                     </table>
+
+                    <Pagination links={records.links} />
                 </div>
             </div>
         </DashboardLayout>

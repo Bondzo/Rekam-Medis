@@ -8,12 +8,25 @@ use Inertia\Inertia;
 
 class MedicineController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $medicines = Medicine::latest()->get();
+        $search = $request->search;
+
+        $medicines = Medicine::query()
+            ->when($search, function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('unit', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->paginate(5)
+            ->withQueryString();
 
         return Inertia::render('Medicines/Index', [
             'medicines' => $medicines,
+            'filters' => [
+                'search' => $search,
+            ],
         ]);
     }
 

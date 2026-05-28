@@ -1,4 +1,5 @@
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import { Pagination, SearchInput } from '@/Components/IndexControls';
 import { Head, Link, router } from '@inertiajs/react';
 
 type Medicine = {
@@ -11,10 +12,16 @@ type Medicine = {
 };
 
 type Props = {
-    medicines: Medicine[];
+    medicines: {
+        data: Medicine[];
+        links: any[];
+    };
+    filters: {
+        search: string;
+    };
 };
 
-export default function Index({ medicines }: Props) {
+export default function Index({ medicines, filters }: Props) {
     const handleDelete = (id: number) => {
         if (confirm('Delete this medicine?')) {
             router.delete(route('medicines.destroy', id));
@@ -39,15 +46,19 @@ export default function Index({ medicines }: Props) {
 
                     <Link
                         href={route('medicines.create')}
-                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        className="rm-button inline-flex items-center px-5"
                     >
-                        + Add Medicine
+                        Add Medicine
                     </Link>
                 </div>
 
-                <div className="overflow-hidden rounded-xl bg-white shadow">
+                <div className="mb-4">
+                    <SearchInput routeName="/medicines" placeholder="Search medicine..." value={filters.search} />
+                </div>
+
+                <div className="rm-table-shell">
                     <table className="w-full border-collapse">
-                        <thead className="bg-gray-100">
+                        <thead className="rm-table-head">
                             <tr>
                                 <th className="px-4 py-3 text-left text-sm font-semibold">
                                     Name
@@ -76,8 +87,8 @@ export default function Index({ medicines }: Props) {
                         </thead>
 
                         <tbody>
-                            {medicines.length > 0 ? (
-                                medicines.map((medicine) => (
+                            {medicines.data.length > 0 ? (
+                                medicines.data.map((medicine) => (
                                     <tr
                                         key={medicine.id}
                                         className="border-t"
@@ -112,7 +123,7 @@ export default function Index({ medicines }: Props) {
                                                         'medicines.edit',
                                                         medicine.id
                                                     )}
-                                                    className="rounded bg-yellow-500 px-3 py-1 text-black"
+                                                    className="rm-button inline-flex min-h-10 items-center px-4 text-xs"
                                                 >
                                                     Edit
                                                 </Link>
@@ -123,7 +134,7 @@ export default function Index({ medicines }: Props) {
                                                             medicine.id
                                                         )
                                                     }
-                                                    className="rounded bg-red-600 px-3 py-1 text-white"
+                                                    className="rm-button rm-button-danger min-h-10 px-4 text-xs"
                                                 >
                                                     Delete
                                                 </button>
@@ -143,6 +154,8 @@ export default function Index({ medicines }: Props) {
                             )}
                         </tbody>
                     </table>
+
+                    <Pagination links={medicines.links} />
                 </div>
             </div>
         </DashboardLayout>

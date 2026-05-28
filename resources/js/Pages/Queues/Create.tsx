@@ -11,7 +11,7 @@ export default function Create({
     doctors,
 }: Props) {
 
-    const { data, setData, post } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         patient_id: "",
         doctor_id: "",
     });
@@ -29,10 +29,10 @@ export default function Create({
                 Add Queue
             </h1>
 
-            <form
-                onSubmit={submit}
-                className="bg-white p-6 rounded-lg shadow space-y-4"
-            >
+            <form onSubmit={submit} className="bg-white p-6 rounded-lg shadow">
+                <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                <label className="mb-1 block text-sm font-medium">Patient <span className="text-red-500">*</span></label>
 
                 <select
                     className="w-full border rounded p-2"
@@ -61,7 +61,15 @@ export default function Create({
                     ))}
 
                 </select>
+                {errors.patient_id && (
+                    <div className="text-red-500 text-sm">
+                        {errors.patient_id}
+                    </div>
+                )}
+                </div>
 
+                <div>
+                <label className="mb-1 block text-sm font-medium">Doctor <span className="text-red-500">*</span></label>
                 <select
                     className="w-full border rounded p-2"
                     value={data.doctor_id}
@@ -91,13 +99,26 @@ export default function Create({
                     ))}
 
                 </select>
+                {errors.doctor_id && (
+                    <div className="text-red-500 text-sm">
+                        {errors.doctor_id}
+                    </div>
+                )}
+                </div>
+                </div>
 
-                <button
-                    type="submit"
-                    className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg"
-                >
-                    Save Queue
-                </button>
+                <div className="mt-6 flex gap-3">
+                    <Link href="/queues" className="rounded bg-gray-700 px-4 py-2 text-white">
+                        Back
+                    </Link>
+                    <button
+                        type="submit"
+                        disabled={processing}
+                        className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg"
+                    >
+                        Save Queue
+                    </button>
+                </div>
 
             </form>
 

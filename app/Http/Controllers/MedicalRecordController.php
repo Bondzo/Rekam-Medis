@@ -9,14 +9,34 @@ use Inertia\Inertia;
 
 class MedicalRecordController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->search;
+
         $records = MedicalRecord::with(['patient', 'doctor', 'queue'])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('diagnosis', 'like', "%{$search}%")
+                        ->orWhere('medical_treatment', 'like', "%{$search}%")
+                        ->orWhere('complaint', 'like', "%{$search}%")
+                        ->orWhereHas('patient', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('medical_record_number', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('doctor', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->latest()
-            ->get();
+            ->paginate(5)
+            ->withQueryString();
 
         return Inertia::render('MedicalRecords/Index', [
             'records' => $records,
+            'filters' => [
+                'search' => $search,
+            ],
         ]);
     }
 

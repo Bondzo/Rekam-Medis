@@ -57,7 +57,7 @@ export default function Edit({ record }: { record: Record }) {
                 </div>
 
                 <form onSubmit={submit} className="rounded-xl bg-white p-6 shadow">
-                    <div className="mb-6 grid grid-cols-2 gap-4">
+                    <div className="mb-6 grid gap-4 md:grid-cols-2">
                         <div>
                             <label className="mb-1 block text-sm font-medium">Patient</label>
                             <input
@@ -92,6 +92,7 @@ export default function Edit({ record }: { record: Record }) {
                             </label>
                             <textarea
                                 value={(data as any)[field]}
+                                placeholder={`Isi ${label.toLowerCase()}`}
                                 onChange={(e) => setData(field as any, e.target.value)}
                                 className="w-full rounded-lg border-gray-300"
                             />
@@ -113,15 +114,28 @@ export default function Edit({ record }: { record: Record }) {
                             onChange={(e) => setData('record_date', e.target.value)}
                             className="w-full rounded-lg border-gray-300"
                         />
+                        {errors.record_date && (
+                            <p className="mt-1 text-sm text-red-500">
+                                {errors.record_date}
+                            </p>
+                        )}
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={processing}
-                        className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
-                    >
-                        Update Medical Record
-                    </button>
+                    <div className="flex gap-3">
+                        <Link
+                            href={route('medical-records.index')}
+                            className="rounded-lg bg-gray-700 px-5 py-2 text-white"
+                        >
+                            Back
+                        </Link>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+                        >
+                            Update Medical Record
+                        </button>
+                    </div>
                 </form>
             </div>
         </DashboardLayout>

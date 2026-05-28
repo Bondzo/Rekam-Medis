@@ -2,6 +2,18 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
 
+const dosageOptions = [
+    '1x1 sebelum makan',
+    '1x1 setelah makan',
+    '2x1 sebelum makan',
+    '2x1 setelah makan',
+    '3x1 sebelum makan',
+    '3x1 setelah makan',
+    '3x2 setelah makan',
+    '1 tablet saat nyeri',
+    'Sesuai anjuran dokter',
+];
+
 type Medicine = {
     id: number;
     name: string;
@@ -23,6 +35,7 @@ type MedicalRecord = {
 type PrescriptionItemForm = {
     medicine_id: string;
     dosage: string;
+    dosage_mode: 'preset' | 'custom';
     quantity: string;
 };
 
@@ -46,6 +59,7 @@ export default function Create({ medicalRecord, medicalRecords, medicines }: Pro
             {
                 medicine_id: '',
                 dosage: '',
+                dosage_mode: 'preset',
                 quantity: '1',
             },
         ],
@@ -63,6 +77,7 @@ export default function Create({ medicalRecord, medicalRecords, medicines }: Pro
             {
                 medicine_id: '',
                 dosage: '',
+                dosage_mode: 'preset',
                 quantity: '1',
             },
         ]);
@@ -78,7 +93,7 @@ export default function Create({ medicalRecord, medicalRecords, medicines }: Pro
     const updateItem = (
         index: number,
         field: keyof PrescriptionItemForm,
-        value: string | number
+        value: string
     ) => {
         const newItems = [...data.items];
         newItems[index] = {
@@ -117,7 +132,7 @@ export default function Create({ medicalRecord, medicalRecords, medicines }: Pro
                 </div>
 
                 <form onSubmit={submit} className="rounded-xl bg-white p-6 shadow">
-                    <div className="mb-6 grid grid-cols-2 gap-4">
+                    <div className="mb-6 grid gap-4 md:grid-cols-2">
                         <div>
                             <label className="mb-1 block text-sm font-medium">
                                 Patient
@@ -193,10 +208,10 @@ export default function Create({ medicalRecord, medicalRecords, medicines }: Pro
                                     key={index}
                                     className="mb-4 rounded-lg border p-4"
                                 >
-                                    <div className="grid grid-cols-4 gap-4">
+                                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                                         <div>
                                             <label className="mb-1 block text-sm font-medium">
-                                                Medicine
+                                                Medicine <span className="text-red-500">*</span>
                                             </label>
                                             <select
                                                 value={item.medicine_id}
@@ -224,17 +239,51 @@ export default function Create({ medicalRecord, medicalRecords, medicines }: Pro
 
                                         <div>
                                             <label className="mb-1 block text-sm font-medium">
-                                                Dosage
+                                                Dosage <span className="text-red-500">*</span>
                                             </label>
-                                            <input
-                                                type="text"
-                                                value={item.dosage}
-                                                onChange={(e) =>
-                                                    updateItem(index, 'dosage', e.target.value)
-                                                }
-                                                placeholder="3x1 setelah makan"
+                                            <select
+                                                value={item.dosage_mode === 'custom' ? 'Lainnya' : item.dosage}
+                                                onChange={(e) => {
+                                                    if (e.target.value === 'Lainnya') {
+                                                        const newItems = [...data.items];
+                                                        newItems[index] = {
+                                                            ...newItems[index],
+                                                            dosage: '',
+                                                            dosage_mode: 'custom',
+                                                        };
+                                                        setData('items', newItems);
+                                                        return;
+                                                    }
+
+                                                    const newItems = [...data.items];
+                                                    newItems[index] = {
+                                                        ...newItems[index],
+                                                        dosage: e.target.value,
+                                                        dosage_mode: 'preset',
+                                                    };
+                                                    setData('items', newItems);
+                                                }}
                                                 className="w-full rounded-lg border-gray-300"
-                                            />
+                                            >
+                                                <option value="">Select dosage</option>
+                                                {dosageOptions.map((dosage) => (
+                                                    <option key={dosage} value={dosage}>
+                                                        {dosage}
+                                                    </option>
+                                                ))}
+                                                <option value="Lainnya">Lainnya</option>
+                                            </select>
+                                            {item.dosage_mode === 'custom' && (
+                                                <input
+                                                    type="text"
+                                                    value={item.dosage}
+                                                    onChange={(e) =>
+                                                        updateItem(index, 'dosage', e.target.value)
+                                                    }
+                                                    placeholder="Tulis dosis sesuai instruksi dokter"
+                                                    className="mt-2 w-full rounded-lg border-gray-300"
+                                                />
+                                            )}
                                             {errors[`items.${index}.dosage`] && (
                                                 <p className="mt-1 text-sm text-red-600">
                                                     {errors[`items.${index}.dosage`]}
@@ -244,11 +293,14 @@ export default function Create({ medicalRecord, medicalRecords, medicines }: Pro
 
                                         <div>
                                             <label className="mb-1 block text-sm font-medium">
-                                                Quantity
+                                                Quantity <span className="text-red-500">*</span>
                                             </label>
                                             <input
                                                 type="number"
+                                                min="1"
+                                                step="1"
                                                 value={item.quantity}
+                                                placeholder="Contoh: 10"
                                                 onChange={(e) =>
                                                     updateItem(
                                                         index,
@@ -258,6 +310,9 @@ export default function Create({ medicalRecord, medicalRecords, medicines }: Pro
                                                 }
                                                 className="w-full rounded-lg border-gray-300"
                                             />
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                Boleh dikosongkan saat mengetik, validasi saat disimpan.
+                                            </p>
                                             {errors[`items.${index}.quantity`] && (
                                                 <p className="mt-1 text-sm text-red-600">
                                                     {errors[`items.${index}.quantity`]}
@@ -312,18 +367,32 @@ export default function Create({ medicalRecord, medicalRecords, medicines }: Pro
                         </label>
                         <textarea
                             value={data.notes}
+                            placeholder="Catatan resep"
                             onChange={(e) => setData('notes', e.target.value)}
                             className="w-full rounded-lg border-gray-300"
                         />
+                        {errors.notes && (
+                            <p className="mt-1 text-sm text-red-600">
+                                {errors.notes}
+                            </p>
+                        )}
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={processing}
-                        className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
-                    >
-                        Save Prescription
-                    </button>
+                    <div className="flex gap-3">
+                        <Link
+                            href={route('prescriptions.index')}
+                            className="rounded-lg bg-gray-700 px-5 py-2 text-white"
+                        >
+                            Back
+                        </Link>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+                        >
+                            Save Prescription
+                        </button>
+                    </div>
                 </form>
             </div>
         </DashboardLayout>

@@ -40,6 +40,15 @@ type Props = {
     medicalRecords: MedicalRecord[];
 };
 
+const parseAmount = (value: string) => {
+    if (value.trim() === '') {
+        return 0;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
 export default function Create({ medicalRecord, medicalRecords }: Props) {
     const { data, setData, post, processing, errors } = useForm<PaymentForm>({
         medical_record_id: medicalRecord?.id || '',
@@ -61,12 +70,9 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
         (sum, item) => sum + Number(item.subtotal),
         0
     );
-    const adminFee = Number(data.admin_fee);
-    const doctorFee = Number(data.doctor_fee);
-    const totalPayment =
-        (Number.isFinite(adminFee) ? adminFee : 0) +
-        (Number.isFinite(doctorFee) ? doctorFee : 0) +
-        medicineFee;
+    const adminFee = parseAmount(data.admin_fee);
+    const doctorFee = parseAmount(data.doctor_fee);
+    const totalPayment = adminFee + doctorFee + medicineFee;
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
@@ -97,7 +103,7 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                 </div>
 
                 <form onSubmit={submit} className="rounded-xl bg-white p-6 shadow">
-                    <div className="mb-6 grid grid-cols-3 gap-4">
+                    <div className="mb-6 grid gap-4 md:grid-cols-3">
                         <div>
                             <label className="mb-1 block text-sm font-medium">
                                 Medical Record
@@ -206,7 +212,7 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                         </div>
                     </div>
 
-                    <div className="mb-6 grid grid-cols-5 gap-4">
+                    <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                         <div>
                             <label className="mb-1 block text-sm font-medium">
                                 Medicine Fee
@@ -225,10 +231,16 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                             </label>
                             <input
                                 type="number"
+                                min="0"
+                                step="0.01"
                                 value={data.admin_fee}
+                                placeholder="Contoh: 10000"
                                 onChange={(e) => setData('admin_fee', e.target.value)}
                                 className="w-full rounded-lg border-gray-300"
                             />
+                            <p className="mt-1 text-xs text-gray-500">
+                                Masukkan angka tanpa format Rupiah.
+                            </p>
                             {errors.admin_fee && (
                                 <p className="mt-1 text-sm text-red-600">
                                     {errors.admin_fee}
@@ -242,10 +254,16 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                             </label>
                             <input
                                 type="number"
+                                min="0"
+                                step="0.01"
                                 value={data.doctor_fee}
+                                placeholder="Contoh: 50000"
                                 onChange={(e) => setData('doctor_fee', e.target.value)}
                                 className="w-full rounded-lg border-gray-300"
                             />
+                            <p className="mt-1 text-xs text-gray-500">
+                                Masukkan angka tanpa format Rupiah.
+                            </p>
                             {errors.doctor_fee && (
                                 <p className="mt-1 text-sm text-red-600">
                                     {errors.doctor_fee}
@@ -283,6 +301,9 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                                 <option value="transfer">Transfer</option>
                                 <option value="qris">QRIS</option>
                             </select>
+                            <p className="mt-1 text-xs text-gray-500">
+                                Transfer dan QRIS akan memakai alur Midtrans.
+                            </p>
                             {errors.payment_method && (
                                 <p className="mt-1 text-sm text-red-600">
                                     {errors.payment_method}
@@ -298,13 +319,21 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                         </p>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={processing}
-                        className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
-                    >
-                        Save Payment
-                    </button>
+                    <div className="flex gap-3">
+                        <Link
+                            href={route('payments.index')}
+                            className="rounded-lg bg-gray-700 px-5 py-2 text-white"
+                        >
+                            Back
+                        </Link>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+                        >
+                            Save Payment
+                        </button>
+                    </div>
                 </form>
             </div>
         </DashboardLayout>
