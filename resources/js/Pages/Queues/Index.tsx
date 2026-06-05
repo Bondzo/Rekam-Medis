@@ -1,5 +1,6 @@
 import { Pagination, SearchInput } from "../../Components/IndexControls";
 import DashboardLayout from "../../Layouts/DashboardLayout";
+import { PageProps } from "@/types";
 import { Link, router, usePage } from "@inertiajs/react";
 
 type Queue = {
@@ -8,6 +9,7 @@ type Queue = {
     status: "waiting" | "checking" | "done" | string;
     patient?: {
         name: string;
+        medical_record_number?: string;
     } | null;
     doctor?: {
         name: string;
@@ -23,6 +25,8 @@ type Props = {
         search: string;
         status?: string | null;
     };
+    todayOnly?: boolean;
+    doctorProfileMissing?: boolean;
 };
 
 const statusFilters = [
@@ -42,9 +46,10 @@ function handleDelete(id: number) {
     }
 }
 
-export default function Index({ queues, filters }: Props) {
-    const { auth } = usePage().props as any;
+export default function Index({ queues, filters, todayOnly = false, doctorProfileMissing = false }: Props) {
+    const { auth } = usePage<PageProps>().props;
     const user = auth.user;
+    const canPrint = user.role === "admin" || user.role === "staff";
 
     return (
         <DashboardLayout>
@@ -57,6 +62,18 @@ export default function Index({ queues, filters }: Props) {
                     </Link>
                 )}
             </div>
+
+            {todayOnly && (
+                <div className="mb-4 inline-flex border border-[var(--rm-hairline)] bg-[var(--rm-surface-soft)] px-3 py-2 text-xs font-bold uppercase tracking-[0.5px] text-[var(--rm-muted)]">
+                    Menampilkan data hari ini
+                </div>
+            )}
+
+            {doctorProfileMissing && (
+                <div className="mb-4 border border-[var(--rm-hairline)] bg-[var(--rm-surface-soft)] px-4 py-3 text-sm text-[var(--rm-body)]">
+                    Akun doctor ini belum terhubung dengan profil doctor. Hubungi admin untuk melengkapi data doctor.
+                </div>
+            )}
 
             <div className="mb-4">
                 <SearchInput
@@ -139,6 +156,15 @@ export default function Index({ queues, filters }: Props) {
 
                                     {user.role !== "doctor" && (
                                         <>
+                                            {canPrint && (
+                                                <Link
+                                                    href={route("queues.print", queue.id)}
+                                                    className="rm-button-outline inline-flex min-h-10 items-center px-4 text-xs"
+                                                >
+                                                    Print
+                                                </Link>
+                                            )}
+
                                             <button
                                                 onClick={() => updateStatus(queue.id, "checking")}
                                                 className="rm-button rm-button-warning min-h-10 px-4 text-xs"

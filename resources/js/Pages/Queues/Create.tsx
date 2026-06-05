@@ -2,8 +2,16 @@ import DashboardLayout from "../../Layouts/DashboardLayout";
 import { useForm, Link } from "@inertiajs/react";
 
 type Props = {
-    patients: any[];
-    doctors: any[];
+    patients: Array<{
+        id: number;
+        name: string;
+        medical_record_number?: string | null;
+    }>;
+    doctors: Array<{
+        id: number;
+        name: string;
+        specialist: string;
+    }>;
 };
 
 export default function Create({
@@ -53,7 +61,7 @@ export default function Create({
 
                         <option
                             key={patient.id}
-                            value={patient.id}
+                            value={String(patient.id)}
                         >
                             {patient.name}
                         </option>
@@ -89,7 +97,7 @@ export default function Create({
 
                         <option
                             key={doctor.id}
-                            value={doctor.id}
+                            value={String(doctor.id)}
                         >
                             Dr. {doctor.name}
                             {" - "}

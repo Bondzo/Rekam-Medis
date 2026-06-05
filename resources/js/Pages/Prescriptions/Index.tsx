@@ -36,9 +36,10 @@ type Props = {
     filters: {
         search: string;
     };
+    todayOnly?: boolean;
 };
 
-export default function Index({ prescriptions, filters }: Props) {
+export default function Index({ prescriptions, filters, todayOnly = false }: Props) {
     return (
         <DashboardLayout>
             <Head title="Prescriptions" />
@@ -65,6 +66,12 @@ export default function Index({ prescriptions, filters }: Props) {
                     </Link>
 
                 </div>
+
+                {todayOnly && (
+                    <div className="mb-4 inline-flex border border-[var(--rm-hairline)] bg-[var(--rm-surface-soft)] px-3 py-2 text-xs font-bold uppercase tracking-[0.5px] text-[var(--rm-muted)]">
+                        Menampilkan data hari ini
+                    </div>
+                )}
 
                 <div className="mb-4">
                     <SearchInput routeName="/prescriptions" placeholder="Search prescription..." value={filters.search} />

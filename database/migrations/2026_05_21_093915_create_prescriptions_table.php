@@ -6,33 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('prescription_items', function (Blueprint $table) {
+        Schema::create('prescriptions', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('prescription_id')
+            $table->foreignId('medical_record_id')
                 ->constrained()
                 ->cascadeOnDelete();
 
-            $table->foreignId('medicine_id')
-                ->constrained()
-                ->cascadeOnDelete();
-
-            $table->string('dosage');
-            $table->integer('quantity');
-            $table->decimal('subtotal', 12, 2)->default(0);
+            $table->text('notes')->nullable();
 
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('prescriptions');

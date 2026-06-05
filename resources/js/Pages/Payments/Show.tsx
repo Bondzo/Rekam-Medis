@@ -59,12 +59,13 @@ type Props = {
 };
 
 export default function Show({ payment, midtransClientKey }: Props) {
+    const isPaid = payment.status === 'paid';
     const canPayWithMidtrans =
         ['transfer', 'qris'].includes(payment.payment_method) &&
-        payment.status === 'unpaid' &&
+        !isPaid &&
         Boolean(payment.snap_token);
     const canConfirmManually =
-        payment.status === 'unpaid' &&
+        !isPaid &&
         payment.payment_method === 'cash' &&
         !canPayWithMidtrans;
 
@@ -95,7 +96,7 @@ export default function Show({ payment, midtransClientKey }: Props) {
         window.snap.pay(payment.snap_token, {
             onSuccess: () => {
                 router.put(
-                    route('payments.confirm', payment.id),
+                    route('payments.mark-paid', payment.id),
                     {},
                     {
                         preserveScroll: true,
@@ -149,12 +150,31 @@ export default function Show({ payment, midtransClientKey }: Props) {
                         </p>
                     </div>
 
-                    <Link
-                        href={route('payments.index')}
-                        className="rounded-lg bg-gray-700 px-4 py-2 text-sm text-white"
-                    >
-                        Back
-                    </Link>
+                    <div className="flex flex-wrap justify-end gap-2">
+                        {isPaid && (
+                            <>
+                                <Link
+                                    href={route('payments.print', payment.id)}
+                                    className="rounded-xl bg-[var(--rm-action)] px-4 py-2 text-sm font-bold uppercase tracking-[0.5px] text-white"
+                                >
+                                    Print Struk
+                                </Link>
+                                <a
+                                    href={route('payments.invoice-pdf', payment.id)}
+                                    className="rounded-xl border border-[var(--rm-action)] px-4 py-2 text-sm font-bold uppercase tracking-[0.5px] text-[var(--rm-action)]"
+                                >
+                                    Download PDF
+                                </a>
+                            </>
+                        )}
+
+                        <Link
+                            href={route('payments.index')}
+                            className="rounded-xl bg-gray-700 px-4 py-2 text-sm text-white"
+                        >
+                            Back
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="grid gap-6">
@@ -200,7 +220,7 @@ export default function Show({ payment, midtransClientKey }: Props) {
                             </p>
                         </div>
 
-                        {payment.status === 'paid' && (
+                        {isPaid && (
                             <div className="mb-6 rounded-lg bg-green-100 p-4 text-sm font-semibold text-green-700">
                                 Pembayaran berhasil
                             </div>

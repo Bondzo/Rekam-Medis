@@ -21,26 +21,41 @@ class DashboardController extends Controller
 
         switch ($user->role) {
             case 'doctor':
-                // TODO: Replace this name lookup with a doctors.user_id relation when available.
-                $doctor = Doctor::where('name', $user->name)->first();
+                $doctor = $this->doctorProfile();
                 $doctorId = $doctor?->id;
 
-                $todayQueuesQuery = Queue::where('doctor_id', $doctorId)
+                $todayQueuesQuery = Queue::query()
+                    ->when(
+                        $doctorId,
+                        fn ($query) => $query->where('doctor_id', $doctorId),
+                        fn ($query) => $query->whereRaw('1 = 0')
+                    )
                     ->whereDate('queue_date', $today);
 
-                $todayMedicalRecordsQuery = MedicalRecord::where('doctor_id', $doctorId)
+                $todayMedicalRecordsQuery = MedicalRecord::query()
+                    ->when(
+                        $doctorId,
+                        fn ($query) => $query->where('doctor_id', $doctorId),
+                        fn ($query) => $query->whereRaw('1 = 0')
+                    )
                     ->whereDate('record_date', $today);
 
-                $todayPrescriptionsQuery = Prescription::whereDate('created_at', $today)
-                    ->whereHas('medicalRecord', function ($query) use ($doctorId) {
-                        $query->where('doctor_id', $doctorId);
-                    });
+                $todayPrescriptionsQuery = Prescription::query()
+                    ->when(
+                        $doctorId,
+                        fn ($query) => $query->whereHas('medicalRecord', function ($query) use ($doctorId) {
+                            $query->where('doctor_id', $doctorId);
+                        }),
+                        fn ($query) => $query->whereRaw('1 = 0')
+                    )
+                    ->whereDate('created_at', $today);
 
                 return Inertia::render(
                     'Dashboard',
                     [
                         'role' => 'doctor',
                         'doctorName' => $doctor?->name ?? $user->name,
+                        'doctorProfileMissing' => !$doctor,
                         'todayQueues' => (clone $todayQueuesQuery)
                             ->with(['patient:id,name'])
                             ->latest()
@@ -136,5 +151,10 @@ class DashboardController extends Controller
                     ]
                 );
         }
+    }
+
+    private function doctorProfile(): ?Doctor
+    {
+        return Doctor::where('user_id', auth()->id())->first();
     }
 }

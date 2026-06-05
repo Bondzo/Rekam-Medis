@@ -103,7 +103,7 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                 </div>
 
                 <form onSubmit={submit} className="rounded-xl bg-white p-6 shadow">
-                    <div className="mb-6 grid gap-4 md:grid-cols-3">
+                    <div className="mb-6 grid gap-4 md:grid-cols-4">
                         <div>
                             <label className="mb-1 block text-sm font-medium">
                                 Medical Record
@@ -147,6 +147,18 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                             <input
                                 type="text"
                                 value={selectedMedicalRecord?.patient?.medical_record_number || ''}
+                                disabled
+                                className="w-full rounded-lg border-gray-300 bg-gray-100"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="mb-1 block text-sm font-medium">
+                                Patient
+                            </label>
+                            <input
+                                type="text"
+                                value={selectedMedicalRecord?.patient?.name || ''}
                                 disabled
                                 className="w-full rounded-lg border-gray-300 bg-gray-100"
                             />

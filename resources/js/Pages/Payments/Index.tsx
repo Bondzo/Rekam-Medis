@@ -28,9 +28,10 @@ type Props = {
     filters: {
         search: string;
     };
+    todayOnly?: boolean;
 };
 
-export default function Index({ payments, filters }: Props) {
+export default function Index({ payments, filters, todayOnly = false }: Props) {
     return (
         <DashboardLayout>
             <Head title="Payments" />
@@ -48,6 +49,12 @@ export default function Index({ payments, filters }: Props) {
                         Create Payment
                     </Link>
                 </div>
+
+                {todayOnly && (
+                    <div className="mb-4 inline-flex border border-[var(--rm-hairline)] bg-[var(--rm-surface-soft)] px-3 py-2 text-xs font-bold uppercase tracking-[0.5px] text-[var(--rm-muted)]">
+                        Menampilkan data hari ini
+                    </div>
+                )}
 
                 <div className="mb-4">
                     <SearchInput routeName="/payments" placeholder="Search payment..." value={filters.search} />

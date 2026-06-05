@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\MedicalRecord;
 use App\Models\Payment;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -16,22 +18,29 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $search = $request->search;
+        $user = auth()->user();
+        $today = Carbon::today();
 
         $payments = Payment::with([
             'medicalRecord.patient',
             'medicalRecord.doctor',
             'medicalRecord.prescription.items.medicine',
         ])
+            ->when($user->role !== 'admin', function ($query) use ($today) {
+                $query->whereDate('payment_date', $today);
+            })
             ->when($search, function ($query) use ($search) {
-                $query->where('status', 'like', "%{$search}%")
-                    ->orWhere('payment_method', 'like', "%{$search}%")
-                    ->orWhereHas('medicalRecord.patient', function ($query) use ($search) {
-                        $query->where('name', 'like', "%{$search}%")
-                            ->orWhere('medical_record_number', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('medicalRecord.doctor', function ($query) use ($search) {
-                        $query->where('name', 'like', "%{$search}%");
-                    });
+                $query->where(function ($query) use ($search) {
+                    $query->where('status', 'like', "%{$search}%")
+                        ->orWhere('payment_method', 'like', "%{$search}%")
+                        ->orWhereHas('medicalRecord.patient', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('medical_record_number', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('medicalRecord.doctor', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%");
+                        });
+                });
             })
             ->latest()
             ->paginate(5)
@@ -42,6 +51,7 @@ class PaymentController extends Controller
             'filters' => [
                 'search' => $search,
             ],
+            'todayOnly' => $user->role !== 'admin',
         ]);
     }
 
@@ -54,16 +64,21 @@ class PaymentController extends Controller
                 'patient',
                 'doctor',
                 'prescription.items.medicine',
-            ])->findOrFail($request->medical_record_id);
+                'payment',
+            ])
+                ->whereHas('prescription')
+                ->whereDoesntHave('payment')
+                ->findOrFail($request->medical_record_id);
         }
 
         $medicalRecords = MedicalRecord::with([
             'patient',
             'doctor',
             'prescription.items.medicine',
+            'payment',
         ])
-            ->has('prescription')
-            ->doesntHave('payment')
+            ->whereHas('prescription')
+            ->whereDoesntHave('payment')
             ->latest()
             ->get();
 
@@ -82,6 +97,13 @@ class PaymentController extends Controller
             'payment_method' => 'required|in:cash,transfer,qris',
             'payment_date' => 'required|date',
         ]);
+
+        if (
+            auth()->user()->role !== 'admin' &&
+            !Carbon::parse($validated['payment_date'])->isSameDay(Carbon::today())
+        ) {
+            abort(403);
+        }
 
         $payment = DB::transaction(function () use ($validated) {
             $medicalRecord = MedicalRecord::with([
@@ -141,6 +163,8 @@ class PaymentController extends Controller
 
     public function show(Payment $payment)
     {
+        $this->authorizeOperationalPayment($payment);
+
         $payment->load([
             'medicalRecord.patient',
             'medicalRecord.doctor',
@@ -153,11 +177,63 @@ class PaymentController extends Controller
         ]);
     }
 
+    public function print(Payment $payment)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'], true)) {
+            abort(403);
+        }
+
+        $this->authorizeOperationalPayment($payment);
+
+        if ($payment->status !== 'paid') {
+            abort(403);
+        }
+
+        $payment->load([
+            'medicalRecord.patient',
+            'medicalRecord.doctor',
+            'medicalRecord.prescription.items.medicine',
+        ]);
+
+        return Inertia::render('Payments/Print', [
+            'payment' => $payment,
+            'printedAt' => now()->toDateTimeString(),
+        ]);
+    }
+
+    public function invoicePdf(Payment $payment)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'], true)) {
+            abort(403);
+        }
+
+        $this->authorizeOperationalPayment($payment);
+
+        if ($payment->status !== 'paid') {
+            abort(403);
+        }
+
+        $payment->load([
+            'medicalRecord.patient',
+            'medicalRecord.doctor',
+            'medicalRecord.prescription.items.medicine',
+        ]);
+
+        $pdf = Pdf::loadView('pdf.payment-invoice', [
+            'payment' => $payment,
+            'generatedAt' => now(),
+        ]);
+
+        return $pdf->download("payment-invoice-{$payment->id}.pdf");
+    }
+
     public function confirm(Payment $payment)
     {
         if (!in_array(auth()->user()->role, ['admin', 'staff'], true)) {
             abort(403);
         }
+
+        $this->authorizeOperationalPayment($payment);
 
         if ($payment->status === 'unpaid') {
             $payment->update([
@@ -170,11 +246,37 @@ class PaymentController extends Controller
             ->with('success', 'Pembayaran berhasil dikonfirmasi');
     }
 
+    public function markPaid(Payment $payment)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'], true)) {
+            abort(403);
+        }
+
+        $this->authorizeOperationalPayment($payment);
+
+        if ($payment->status === 'unpaid') {
+            $payment->update([
+                'status' => 'paid',
+            ]);
+        }
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'message' => 'Pembayaran berhasil',
+                'payment' => $payment->fresh(),
+            ]);
+        }
+
+        return back()->with('success', 'Pembayaran berhasil');
+    }
+
     public function success(Payment $payment)
     {
         if (!in_array(auth()->user()->role, ['admin', 'staff'], true)) {
             abort(403);
         }
+
+        $this->authorizeOperationalPayment($payment);
 
         $payment->load([
             'medicalRecord.patient',
@@ -261,5 +363,16 @@ class PaymentController extends Controller
                 ],
             ],
         ]);
+    }
+
+    private function authorizeOperationalPayment(Payment $payment): void
+    {
+        if (auth()->user()->role === 'admin') {
+            return;
+        }
+
+        if (!Carbon::parse($payment->payment_date)->isSameDay(Carbon::today())) {
+            abort(403);
+        }
     }
 }

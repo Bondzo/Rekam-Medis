@@ -5,11 +5,13 @@ import {
     CreditCard,
     Gauge,
     LogOut,
+    Menu,
     Moon,
     Pill,
     Stethoscope,
     Sun,
     UserRound,
+    UserCog,
     UsersRound,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -28,6 +30,7 @@ const menusByRole: Record<Role, MenuItem[]> = {
         { label: "Patients", href: "/patients", icon: UsersRound },
         { label: "Queues", href: "/queues", icon: CalendarClock },
         { label: "Doctors", href: "/doctors", icon: Stethoscope },
+        { label: "Staff", href: "/staff", icon: UserCog },
         { label: "Medical Records", href: "/medical-records", icon: ClipboardList },
         { label: "Prescriptions", href: "/prescriptions", icon: Pill },
         { label: "Medicines", href: "/medicines", icon: Pill },
@@ -43,12 +46,20 @@ const menusByRole: Record<Role, MenuItem[]> = {
         { label: "Dashboard", href: "/dashboard", icon: Gauge },
         { label: "Patients", href: "/patients", icon: UsersRound },
         { label: "Queues", href: "/queues", icon: CalendarClock },
+        { label: "Medical Records", href: "/medical-records", icon: ClipboardList },
+        { label: "Prescriptions", href: "/prescriptions", icon: Pill },
         { label: "Medicines", href: "/medicines", icon: Pill },
         { label: "Payments", href: "/payments", icon: CreditCard },
     ],
 };
 
-export default function Sidebar() {
+export default function Sidebar({
+    open,
+    onToggle,
+}: {
+    open: boolean;
+    onToggle: () => void;
+}) {
     const [theme, setTheme] = useState<"light" | "dark">("light");
     const { auth } = usePage().props as {
         auth: {
@@ -80,13 +91,17 @@ export default function Sidebar() {
     const ThemeIcon = theme === "dark" ? Sun : Moon;
 
     return (
-        <aside className="min-h-screen w-64 border-r border-[var(--rm-hairline)] bg-[var(--rm-surface)] p-4 shadow-none">
+        <aside
+            className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-[var(--rm-hairline)] bg-[var(--rm-surface)] p-4 shadow-none transition-transform duration-300 ${
+                open ? "translate-x-0" : "-translate-x-full"
+            }`}
+        >
             <div className="mb-8">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--rm-hairline-strong)] bg-[var(--rm-action)] text-white">
                         <UserRound className="h-5 w-5" strokeWidth={1.8} />
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                         <h1 className="text-xl font-bold text-[var(--rm-ink)]">
                             Rekam Medis
                         </h1>
@@ -94,10 +109,18 @@ export default function Sidebar() {
                             Klinik
                         </p>
                     </div>
+                    <button
+                        type="button"
+                        onClick={onToggle}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center border border-[var(--rm-hairline-strong)] bg-[var(--rm-surface)] text-[var(--rm-ink)] transition hover:bg-[var(--rm-surface-soft)]"
+                        aria-label="Tutup sidebar"
+                    >
+                        <Menu className="h-5 w-5" strokeWidth={1.8} />
+                    </button>
                 </div>
             </div>
 
-            <nav className="space-y-2">
+            <nav className="flex min-h-0 flex-1 flex-col space-y-2 overflow-y-auto">
                 {menuItems.map((item) => (
                     <MenuLink
                         key={item.href}
@@ -106,31 +129,35 @@ export default function Sidebar() {
                     />
                 ))}
 
-                <button
-                    type="button"
-                    onClick={toggleTheme}
-                    className="mt-6 flex min-h-12 w-full items-center justify-between border border-[var(--rm-hairline-strong)] bg-[var(--rm-surface)] px-3 py-2 text-left text-sm font-bold uppercase tracking-[0.5px] text-[var(--rm-ink)] transition hover:bg-[var(--rm-surface-soft)]"
-                    aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-                >
-                    <span className="flex items-center gap-3">
-                        <ThemeIcon className="h-4 w-4" strokeWidth={1.8} />
-                        {theme === "dark" ? "Light Mode" : "Dark Mode"}
-                    </span>
-                    <span className="flex items-center gap-1">
-                        <span className="h-2 w-2 bg-[var(--rm-action)]" />
-                        <span className="h-2 w-2 bg-[var(--rm-accent-red)]" />
-                    </span>
-                </button>
+                <div className="flex-1" />
 
-                <Link
-                    href="/logout"
-                    method="post"
-                    as="button"
-                    className="mt-3 flex min-h-12 w-full items-center gap-3 bg-[var(--rm-action)] px-4 py-2 text-left text-sm font-bold uppercase tracking-[0.5px] text-white hover:bg-[var(--rm-action-active)]"
-                >
-                    <LogOut className="h-4 w-4" strokeWidth={1.8} />
-                    Logout
-                </Link>
+                <div className="space-y-3 pt-6">
+                    <button
+                        type="button"
+                        onClick={toggleTheme}
+                        className="flex min-h-12 w-full items-center justify-between border border-[var(--rm-hairline-strong)] bg-[var(--rm-surface)] px-3 py-2 text-left text-sm font-bold uppercase tracking-[0.5px] text-[var(--rm-ink)] transition hover:bg-[var(--rm-surface-soft)]"
+                        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                    >
+                        <span className="flex items-center gap-3">
+                            <ThemeIcon className="h-4 w-4" strokeWidth={1.8} />
+                            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <span className="h-2 w-2 bg-[var(--rm-action)]" />
+                            <span className="h-2 w-2 bg-[var(--rm-accent-red)]" />
+                        </span>
+                    </button>
+
+                    <Link
+                        href="/logout"
+                        method="post"
+                        as="button"
+                        className="flex min-h-12 w-full items-center gap-3 bg-[var(--rm-action)] px-4 py-2 text-left text-sm font-bold uppercase tracking-[0.5px] text-white hover:bg-[var(--rm-action-active)]"
+                    >
+                        <LogOut className="h-4 w-4" strokeWidth={1.8} />
+                        Logout
+                    </Link>
+                </div>
             </nav>
         </aside>
     );

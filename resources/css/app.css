@@ -8,6 +8,7 @@
     --rm-surface-soft: #f7f7f7;
     --rm-surface-elevated: #fafafa;
     --rm-surface-strong: #ebebeb;
+    --rm-surface-dark: #1a2129;
     --rm-ink: #262626;
     --rm-body: #3c3c3c;
     --rm-muted: #6b7280;
@@ -29,6 +30,7 @@ html.dark {
     --rm-surface-soft: #0d0d0d;
     --rm-surface-elevated: #262626;
     --rm-surface-strong: #262626;
+    --rm-surface-dark: #1a2129;
     --rm-ink: #ffffff;
     --rm-body: #bbbbbb;
     --rm-muted: #7e7e7e;

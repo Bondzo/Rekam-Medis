@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Doctor;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class DoctorController extends Controller
@@ -13,10 +17,14 @@ class DoctorController extends Controller
             $search = $request->search;
 
             $doctors = Doctor::query()
+                ->with('user:id,name,email,role')
                 ->when($search, function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
                         ->orWhere('specialist', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($query) use ($search) {
+                            $query->where('email', 'like', "%{$search}%");
+                        });
                 })
                 ->latest()
                 ->paginate(5)
@@ -37,30 +45,54 @@ class DoctorController extends Controller
 
     public function store(Request $request)
         {
-            $request->validate([
-                'name' => 'required',
-                'specialist' => 'required',
+            $validated = $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'specialist' => ['required', 'string', 'max:255'],
+                'phone' => ['nullable', 'string', 'max:255'],
+                'address' => ['nullable', 'string'],
+                'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+                'password' => ['required', 'string', 'min:8', 'confirmed'],
             ]);
 
-            Doctor::create([
-                'name' => $request->name,
-                'specialist' => $request->specialist,
-                'phone' => $request->phone,
-                'address' => $request->address,
-            ]);
+            DB::transaction(function () use ($validated) {
+                $user = User::create([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'password' => Hash::make($validated['password']),
+                    'role' => 'doctor',
+                ]);
+
+                Doctor::create([
+                    'user_id' => $user->id,
+                    'name' => $validated['name'],
+                    'specialist' => $validated['specialist'],
+                    'phone' => $validated['phone'] ?? null,
+                    'address' => $validated['address'] ?? null,
+                ]);
+            });
 
             return redirect()->route('doctors.index');
         }
 
     public function destroy(Doctor $doctor)
         {
-            $doctor->delete();
+            DB::transaction(function () use ($doctor) {
+                $user = $doctor->user;
+
+                $doctor->delete();
+
+                if ($user && $user->role === 'doctor') {
+                    $user->delete();
+                }
+            });
 
             return redirect()->route('doctors.index');
         }
 
     public function edit(Doctor $doctor)
         {
+            $doctor->load('user:id,name,email,role');
+
             return Inertia::render('Doctors/Edit', [
                 'doctor' => $doctor
             ]);
@@ -71,17 +103,54 @@ class DoctorController extends Controller
             Doctor $doctor
         )
         {
-            $request->validate([
-                'name' => 'required',
-                'specialist' => 'required',
+            $user = $doctor->user;
+
+            $validated = $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'specialist' => ['required', 'string', 'max:255'],
+                'phone' => ['nullable', 'string', 'max:255'],
+                'address' => ['nullable', 'string'],
+                'email' => [
+                    'nullable',
+                    'email',
+                    'max:255',
+                    Rule::unique('users', 'email')->ignore($user?->id),
+                ],
+                'password' => [
+                    Rule::requiredIf(!$user && $request->filled('email')),
+                    'nullable',
+                    'string',
+                    'min:8',
+                    'confirmed',
+                ],
             ]);
 
-            $doctor->update([
-                'name' => $request->name,
-                'specialist' => $request->specialist,
-                'phone' => $request->phone,
-                'address' => $request->address,
-            ]);
+            DB::transaction(function () use ($doctor, $user, $validated) {
+                if ($user) {
+                    $userData = [
+                        'name' => $validated['name'],
+                    ];
+
+                    if (!empty($validated['email'])) {
+                        $userData['email'] = $validated['email'];
+                    }
+
+                    if (!empty($validated['password'])) {
+                        $userData['password'] = Hash::make($validated['password']);
+                    }
+
+                    $user->update($userData);
+                }
+
+                $doctor->fill([
+                    'name' => $validated['name'],
+                    'specialist' => $validated['specialist'],
+                    'phone' => $validated['phone'] ?? null,
+                    'address' => $validated['address'] ?? null,
+                ]);
+
+                $doctor->save();
+            });
 
             return redirect()->route('doctors.index');
         }

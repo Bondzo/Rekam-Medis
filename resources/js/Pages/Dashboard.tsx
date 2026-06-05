@@ -85,10 +85,12 @@ function StatCard({
     label,
     value,
     admin = false,
+    doctor = false,
 }: {
     label: string;
     value: number | string | undefined;
     admin?: boolean;
+    doctor?: boolean;
 }) {
     const displayValue = value ?? 0;
     const isCurrencyValue = String(displayValue).startsWith("Rp");
@@ -102,8 +104,14 @@ function StatCard({
               ? "text-3xl xl:text-[2rem]"
               : "text-4xl";
 
+    const widthClass = doctor
+        ? "w-full"
+        : admin
+          ? "sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)]"
+          : "sm:w-[calc(50%-8px)] lg:w-[calc(25%-12px)] xl:w-[calc(20%-13px)]";
+
     return (
-        <div className={`relative flex min-h-[180px] w-full bg-white p-6 shadow-sm ring-1 ring-gray-200 sm:w-[calc(50%-8px)] dark:bg-[#1a1a1a] dark:ring-[#3c3c3c] ${admin ? "lg:w-[calc(33.333%-11px)]" : "lg:w-[calc(25%-12px)] xl:w-[calc(20%-13px)]"}`}>
+        <div className={`relative flex min-h-[180px] bg-white p-6 shadow-sm ring-1 ring-gray-200 dark:bg-[#1a1a1a] dark:ring-[#3c3c3c] ${widthClass}`}>
             <div className="rm-brand-strip absolute inset-x-0 top-0 h-1" />
             <div className="flex w-full flex-col justify-between">
                 <div className="flex items-start justify-between gap-4">
@@ -296,22 +304,22 @@ function DoctorDashboard({
 }: Props) {
     return (
         <>
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-6 flex flex-col items-start gap-4">
                 <p className="text-sm text-gray-500 dark:text-[#bbbbbb]">Doctor: {doctorName ?? "-"}</p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap justify-start gap-2">
                     <QuickAction href="/queues" label="Queues" />
                     <QuickAction href="/medical-records" label="Medical Records" />
                     <QuickAction href="/prescriptions" label="Prescriptions" />
                 </div>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-4">
-                <StatCard label="Queues Today" value={todayQueues?.length ?? 0} />
-                <StatCard label="Waiting Today" value={totalWaitingQueuesToday} />
-                <StatCard label="Checking Today" value={totalCheckingQueuesToday} />
-                <StatCard label="Done Today" value={totalDoneQueuesToday} />
-                <StatCard label="Medical Records Today" value={totalMedicalRecordsToday} />
-                <StatCard label="Prescriptions Today" value={totalPrescriptionsToday} />
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <StatCard doctor label="Queues Today" value={todayQueues?.length ?? 0} />
+                <StatCard doctor label="Waiting Today" value={totalWaitingQueuesToday} />
+                <StatCard doctor label="Checking Today" value={totalCheckingQueuesToday} />
+                <StatCard doctor label="Done Today" value={totalDoneQueuesToday} />
+                <StatCard doctor label="Medical Records Today" value={totalMedicalRecordsToday} />
+                <StatCard doctor label="Prescriptions Today" value={totalPrescriptionsToday} />
             </div>
 
             <div className="mt-6 grid gap-6 xl:grid-cols-2">
@@ -373,6 +381,11 @@ export default function Dashboard(props: Props) {
                 </p>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
                 <div className="rm-brand-strip mt-4 h-1 w-32" />
+                {props.role !== "admin" && (
+                    <div className="mt-4 inline-flex border border-[var(--rm-hairline)] bg-[var(--rm-surface-soft)] px-3 py-2 text-xs font-bold uppercase tracking-[0.5px] text-[var(--rm-muted)]">
+                        Menampilkan data hari ini
+                    </div>
+                )}
             </div>
 
             {props.role === "doctor" && <DoctorDashboard {...props} />}

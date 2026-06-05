@@ -7,6 +7,9 @@ type Doctor = {
     name: string;
     specialist: string;
     phone?: string | null;
+    user?: {
+        email?: string | null;
+    } | null;
 };
 
 type Props = {
@@ -46,6 +49,7 @@ export default function Index({ doctors, filters }: Props) {
                         <tr>
                             <th className="p-4 text-left">Name</th>
                             <th className="p-4 text-left">Specialist</th>
+                            <th className="p-4 text-left">Email</th>
                             <th className="p-4 text-left">Phone</th>
                             <th className="p-4 text-left">Actions</th>
                         </tr>
@@ -56,6 +60,7 @@ export default function Index({ doctors, filters }: Props) {
                             <tr key={doctor.id} className="border-t">
                                 <td className="p-4">Dr. {doctor.name}</td>
                                 <td className="p-4">{doctor.specialist}</td>
+                                <td className="p-4">{doctor.user?.email ?? "-"}</td>
                                 <td className="p-4">{doctor.phone ?? "-"}</td>
                                 <td className="flex gap-2 p-4">
                                     <Link

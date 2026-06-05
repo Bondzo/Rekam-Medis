@@ -1,5 +1,6 @@
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { PageProps } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 
 type MedicalRecord = {
     id: number;
@@ -43,6 +44,10 @@ const truncateText = (value: string, maxLength = 120) => {
 };
 
 export default function PatientHistory({ patient }: Props) {
+    const role = usePage<PageProps>().props.auth?.user?.role;
+    const canDelete = role === 'admin';
+    const today = new Intl.DateTimeFormat('en-CA').format(new Date());
+
     return (
         <DashboardLayout>
             <Head title={`${patient.name} Medical Records`} />
@@ -159,16 +164,29 @@ export default function PatientHistory({ patient }: Props) {
                                             Detail
                                         </Link>
 
-                                        <button
-                                            onClick={() => {
-                                                if (confirm('Delete this medical record?')) {
-                                                    router.delete(route('medical-records.destroy', record.id));
-                                                }
-                                            }}
-                                            className="inline-flex items-center rounded-xl border border-[var(--rm-accent-red)] bg-[var(--rm-accent-red)] px-4 py-2 text-xs font-bold uppercase tracking-[0.5px] text-white"
-                                        >
-                                            Delete
-                                        </button>
+                                        {(role === 'admin' ||
+                                            (role === 'doctor' &&
+                                                record.record_date.startsWith(today))) && (
+                                            <Link
+                                                href={route('medical-records.edit', record.id)}
+                                                className="inline-flex items-center rounded-xl border border-[var(--rm-action)] bg-[var(--rm-action)] px-4 py-2 text-xs font-bold uppercase tracking-[0.5px] text-white"
+                                            >
+                                                Edit
+                                            </Link>
+                                        )}
+
+                                        {canDelete && (
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Delete this medical record?')) {
+                                                        router.delete(route('medical-records.destroy', record.id));
+                                                    }
+                                                }}
+                                                className="inline-flex items-center rounded-xl border border-[var(--rm-accent-red)] bg-[var(--rm-accent-red)] px-4 py-2 text-xs font-bold uppercase tracking-[0.5px] text-white"
+                                            >
+                                                Delete
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

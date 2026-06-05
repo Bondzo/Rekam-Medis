@@ -1,5 +1,6 @@
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Head, Link } from '@inertiajs/react';
+import { PageProps } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 
 type Record = {
     id: number;
@@ -62,6 +63,17 @@ function TextSection({ label, value }: { label: string; value?: string | null })
 }
 
 export default function Show({ record }: Props) {
+    const role = usePage<PageProps>().props.auth?.user?.role;
+    const isTodayRecord = record.record_date.startsWith(
+        new Intl.DateTimeFormat('en-CA').format(new Date()),
+    );
+    const canManageClinical =
+        role === 'admin' || (role === 'doctor' && isTodayRecord);
+    const canDelete = role === 'admin';
+    const backHref = record.patient?.id
+        ? route('medical-records.patient-history', record.patient.id)
+        : route('medical-records.index');
+
     return (
         <DashboardLayout>
             <Head title="Medical Record Detail" />
@@ -81,17 +93,42 @@ export default function Show({ record }: Props) {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        <Link
-                            href={route('prescriptions.create', {
-                                medical_record_id: record.id,
-                            })}
-                            className="inline-flex items-center rounded-xl border border-[#178a4b] bg-[#178a4b] px-5 py-2.5 text-sm font-bold uppercase tracking-[0.5px] text-white"
-                        >
-                            Create Prescription
-                        </Link>
+                        {canManageClinical && (
+                            <>
+                                <Link
+                                    href={route('prescriptions.create', {
+                                        medical_record_id: record.id,
+                                    })}
+                                    className="inline-flex items-center rounded-xl border border-[#178a4b] bg-[#178a4b] px-5 py-2.5 text-sm font-bold uppercase tracking-[0.5px] text-white"
+                                >
+                                    Create Prescription
+                                </Link>
+
+                                <Link
+                                    href={route('medical-records.edit', record.id)}
+                                    className="inline-flex items-center rounded-xl border border-[var(--rm-action)] bg-[var(--rm-action)] px-5 py-2.5 text-sm font-bold uppercase tracking-[0.5px] text-white"
+                                >
+                                    Edit
+                                </Link>
+                            </>
+                        )}
+
+                        {canDelete && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (confirm('Delete this medical record?')) {
+                                        router.delete(route('medical-records.destroy', record.id));
+                                    }
+                                }}
+                                className="inline-flex items-center rounded-xl border border-[var(--rm-accent-red)] bg-[var(--rm-accent-red)] px-5 py-2.5 text-sm font-bold uppercase tracking-[0.5px] text-white"
+                            >
+                                Delete
+                            </button>
+                        )}
 
                         <Link
-                            href={route('medical-records.index')}
+                            href={backHref}
                             className="inline-flex items-center rounded-xl border border-[var(--rm-action)] px-5 py-2.5 text-sm font-bold uppercase tracking-[0.5px] text-[var(--rm-action)]"
                         >
                             Back
