@@ -310,9 +310,6 @@ export default function Create({ medicalRecord, medicalRecords, medicines }: Pro
                                                 }
                                                 className="w-full rounded-lg border-gray-300"
                                             />
-                                            <p className="mt-1 text-xs text-gray-500">
-                                                Boleh dikosongkan saat mengetik, validasi saat disimpan.
-                                            </p>
                                             {errors[`items.${index}.quantity`] && (
                                                 <p className="mt-1 text-sm text-red-600">
                                                     {errors[`items.${index}.quantity`]}

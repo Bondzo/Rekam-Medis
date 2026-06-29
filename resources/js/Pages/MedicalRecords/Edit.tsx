@@ -1,5 +1,12 @@
+import PhysicalExaminationForm from '@/Components/PhysicalExaminationForm';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import {
+    buildPhysicalExamination,
+    parsePhysicalExamination,
+    PhysicalExamFields,
+} from '@/lib/physical-examination';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 
 type Record = {
     id: number;
@@ -15,11 +22,16 @@ type Record = {
     };
     doctor?: {
         name: string;
+        specialist?: string | null;
     };
 };
 
 export default function Edit({ record }: { record: Record }) {
-    const { data, setData, put, processing, errors } = useForm({
+    const doctorSpecialist = record.doctor?.specialist ?? null;
+    const [physicalExam, setPhysicalExam] = useState<PhysicalExamFields>(
+        parsePhysicalExamination(record.physical_examination, doctorSpecialist)
+    );
+    const { data, setData, put, processing, errors, transform } = useForm({
         complaint: record.complaint,
         physical_examination: record.physical_examination,
         diagnosis: record.diagnosis,
@@ -30,7 +42,26 @@ export default function Edit({ record }: { record: Record }) {
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        transform((formData) => ({
+            ...formData,
+            physical_examination: buildPhysicalExamination(
+                physicalExam,
+                doctorSpecialist
+            ),
+        }));
+
         put(route('medical-records.update', record.id));
+    };
+
+    const updatePhysicalExam = (
+        field: keyof PhysicalExamFields,
+        value: string
+    ) => {
+        setPhysicalExam((current) => ({
+            ...current,
+            [field]: value,
+        }));
     };
 
     return (
@@ -81,7 +112,6 @@ export default function Edit({ record }: { record: Record }) {
 
                     {[
                         ['complaint', 'Complaint'],
-                        ['physical_examination', 'Physical Examination'],
                         ['diagnosis', 'Diagnosis'],
                         ['medical_treatment', 'Medical Treatment'],
                         ['notes', 'Notes'],
@@ -103,6 +133,13 @@ export default function Edit({ record }: { record: Record }) {
                             )}
                         </div>
                     ))}
+
+                    <PhysicalExaminationForm
+                        value={physicalExam}
+                        onChange={updatePhysicalExam}
+                        specialist={doctorSpecialist}
+                        error={errors.physical_examination}
+                    />
 
                     <div className="mb-6">
                         <label className="mb-1 block text-sm font-medium">

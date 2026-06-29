@@ -101,12 +101,14 @@ class MedicalRecordController extends Controller
             'doctor_id' => 'required|exists:doctors,id',
             'queue_id' => 'nullable|exists:queues,id',
             'complaint' => 'required|string',
-            'physical_examination' => 'required|string',
+            'physical_examination' => 'nullable|string',
             'diagnosis' => 'required|string',
             'medical_treatment' => 'required|string',
             'record_date' => 'required|date',
             'notes' => 'nullable|string',
         ]);
+
+        $validated['physical_examination'] = $validated['physical_examination'] ?? '';
 
         MedicalRecord::create($validated);
 
@@ -147,12 +149,14 @@ public function update(Request $request, MedicalRecord $medicalRecord)
 
         $validated = $request->validate([
             'complaint' => 'required|string',
-            'physical_examination' => 'required|string',
+            'physical_examination' => 'nullable|string',
             'diagnosis' => 'required|string',
             'medical_treatment' => 'required|string',
             'record_date' => 'required|date',
             'notes' => 'nullable|string',
         ]);
+
+        $validated['physical_examination'] = $validated['physical_examination'] ?? '';
 
         $medicalRecord->update($validated);
 

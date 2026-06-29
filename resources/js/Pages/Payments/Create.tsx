@@ -250,9 +250,6 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                                 onChange={(e) => setData('admin_fee', e.target.value)}
                                 className="w-full rounded-lg border-gray-300"
                             />
-                            <p className="mt-1 text-xs text-gray-500">
-                                Masukkan angka tanpa format Rupiah.
-                            </p>
                             {errors.admin_fee && (
                                 <p className="mt-1 text-sm text-red-600">
                                     {errors.admin_fee}
@@ -273,9 +270,6 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                                 onChange={(e) => setData('doctor_fee', e.target.value)}
                                 className="w-full rounded-lg border-gray-300"
                             />
-                            <p className="mt-1 text-xs text-gray-500">
-                                Masukkan angka tanpa format Rupiah.
-                            </p>
                             {errors.doctor_fee && (
                                 <p className="mt-1 text-sm text-red-600">
                                     {errors.doctor_fee}
@@ -313,9 +307,6 @@ export default function Create({ medicalRecord, medicalRecords }: Props) {
                                 <option value="transfer">Transfer</option>
                                 <option value="qris">QRIS</option>
                             </select>
-                            <p className="mt-1 text-xs text-gray-500">
-                                Transfer dan QRIS akan memakai alur Midtrans.
-                            </p>
                             {errors.payment_method && (
                                 <p className="mt-1 text-sm text-red-600">
                                     {errors.payment_method}

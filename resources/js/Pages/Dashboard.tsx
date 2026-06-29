@@ -84,41 +84,33 @@ const formatCurrency = (value: number | string | undefined) =>
 function StatCard({
     label,
     value,
-    admin = false,
-    doctor = false,
 }: {
     label: string;
     value: number | string | undefined;
-    admin?: boolean;
-    doctor?: boolean;
 }) {
     const displayValue = value ?? 0;
     const isCurrencyValue = String(displayValue).startsWith("Rp");
     const valueLength = String(displayValue).length;
     const valueSizeClass =
         isCurrencyValue
-            ? "text-[clamp(1.45rem,1.8vw,1.875rem)]"
+            ? "text-2xl xl:text-3xl"
             : valueLength > 12
-            ? "text-2xl xl:text-[1.7rem]"
+            ? "text-2xl xl:text-3xl"
             : valueLength > 8
-              ? "text-3xl xl:text-[2rem]"
-              : "text-4xl";
-
-    const widthClass = doctor
-        ? "w-full"
-        : admin
-          ? "sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)]"
-          : "sm:w-[calc(50%-8px)] lg:w-[calc(25%-12px)] xl:w-[calc(20%-13px)]";
+              ? "text-3xl"
+              : "text-3xl xl:text-4xl";
 
     return (
-        <div className={`relative flex min-h-[180px] bg-white p-6 shadow-sm ring-1 ring-gray-200 dark:bg-[#1a1a1a] dark:ring-[#3c3c3c] ${widthClass}`}>
+        <div className="relative flex min-h-[168px] bg-white p-5 shadow-sm ring-1 ring-gray-200 dark:bg-[#1a1a1a] dark:ring-[#3c3c3c] sm:p-6">
             <div className="rm-brand-strip absolute inset-x-0 top-0 h-1" />
-            <div className="flex w-full flex-col justify-between">
-                <div className="flex items-start justify-between gap-4">
-                    <p className="max-w-[11rem] text-base font-medium leading-6 text-gray-600 dark:text-[#d7d7d7]">{label}</p>
+            <div className="flex min-w-0 w-full flex-col justify-between gap-8">
+                <div className="flex min-w-0 items-start justify-between gap-4">
+                    <p className="min-w-0 text-base font-medium leading-6 text-gray-600 dark:text-[#d7d7d7]">
+                        {label}
+                    </p>
                     <BarChart3 className="h-6 w-6 shrink-0 text-[var(--rm-ink)]" strokeWidth={2} />
                 </div>
-                <p className={`mt-8 max-w-full whitespace-nowrap font-bold leading-none tracking-normal text-gray-900 dark:text-white ${valueSizeClass}`}>
+                <p className={`min-w-0 max-w-full break-words font-bold leading-tight tracking-normal text-gray-900 dark:text-white ${valueSizeClass}`}>
                     {displayValue}
                 </p>
             </div>
@@ -275,13 +267,13 @@ function AdminDashboard({
 }: Props) {
     return (
         <>
-            <div className="flex flex-wrap justify-center gap-4">
-                <StatCard admin label="Total Patients" value={totalPatients} />
-                <StatCard admin label="Total Doctors" value={totalDoctors} />
-                <StatCard admin label="Total Medical Records" value={totalMedicalRecords} />
-                <StatCard admin label="Total Medicines" value={totalMedicines} />
-                <StatCard admin label="Total Payments" value={totalPayments} />
-                <StatCard admin label="Total Paid Income" value={formatCurrency(totalIncomePaid)} />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <StatCard label="Total Patients" value={totalPatients} />
+                <StatCard label="Total Doctors" value={totalDoctors} />
+                <StatCard label="Total Medical Records" value={totalMedicalRecords} />
+                <StatCard label="Total Medicines" value={totalMedicines} />
+                <StatCard label="Total Payments" value={totalPayments} />
+                <StatCard label="Total Paid Income" value={formatCurrency(totalIncomePaid)} />
             </div>
 
             <div className="mt-6 grid gap-6 xl:grid-cols-2">
@@ -313,13 +305,13 @@ function DoctorDashboard({
                 </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <StatCard doctor label="Queues Today" value={todayQueues?.length ?? 0} />
-                <StatCard doctor label="Waiting Today" value={totalWaitingQueuesToday} />
-                <StatCard doctor label="Checking Today" value={totalCheckingQueuesToday} />
-                <StatCard doctor label="Done Today" value={totalDoneQueuesToday} />
-                <StatCard doctor label="Medical Records Today" value={totalMedicalRecordsToday} />
-                <StatCard doctor label="Prescriptions Today" value={totalPrescriptionsToday} />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <StatCard label="Queues Today" value={todayQueues?.length ?? 0} />
+                <StatCard label="Waiting Today" value={totalWaitingQueuesToday} />
+                <StatCard label="Checking Today" value={totalCheckingQueuesToday} />
+                <StatCard label="Done Today" value={totalDoneQueuesToday} />
+                <StatCard label="Medical Records Today" value={totalMedicalRecordsToday} />
+                <StatCard label="Prescriptions Today" value={totalPrescriptionsToday} />
             </div>
 
             <div className="mt-6 grid gap-6 xl:grid-cols-2">
@@ -352,7 +344,7 @@ function StaffDashboard({
                 <QuickAction href="/payments" label="Payments" />
             </div>
 
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 <StatCard label="Patients Registered Today" value={patientsRegisteredToday} />
                 <StatCard label="Queues Today" value={totalQueuesToday} />
                 <StatCard label="Waiting Queues Today" value={totalWaitingQueuesToday} />

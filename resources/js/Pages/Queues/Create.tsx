@@ -22,6 +22,7 @@ export default function Create({
     const { data, setData, post, processing, errors } = useForm({
         patient_id: "",
         doctor_id: "",
+        queue_date: new Date().toISOString().split("T")[0],
     });
 
     function submit(e: React.FormEvent) {
@@ -38,7 +39,7 @@ export default function Create({
             </h1>
 
             <form onSubmit={submit} className="bg-white p-6 rounded-lg shadow">
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-3">
                 <div>
                 <label className="mb-1 block text-sm font-medium">Patient <span className="text-red-500">*</span></label>
 
@@ -110,6 +111,26 @@ export default function Create({
                 {errors.doctor_id && (
                     <div className="text-red-500 text-sm">
                         {errors.doctor_id}
+                    </div>
+                )}
+                </div>
+
+                <div>
+                <label className="mb-1 block text-sm font-medium">Queue Date <span className="text-red-500">*</span></label>
+                <input
+                    type="date"
+                    className="w-full border rounded p-2"
+                    value={data.queue_date}
+                    onChange={(e) =>
+                        setData(
+                            "queue_date",
+                            e.target.value
+                        )
+                    }
+                />
+                {errors.queue_date && (
+                    <div className="text-red-500 text-sm">
+                        {errors.queue_date}
                     </div>
                 )}
                 </div>

@@ -1,5 +1,12 @@
+import PhysicalExaminationForm from '@/Components/PhysicalExaminationForm';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import {
+    buildPhysicalExamination,
+    createEmptyPhysicalExamFields,
+    PhysicalExamFields,
+} from '@/lib/physical-examination';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 
 type Queue = {
     id: number;
@@ -11,6 +18,7 @@ type Queue = {
     doctor?: {
         id: number;
         name: string;
+        specialist?: string | null;
     };
 };
 
@@ -19,7 +27,11 @@ type Props = {
 };
 
 export default function Create({ queue }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
+    const doctorSpecialist = queue?.doctor?.specialist ?? null;
+    const [physicalExam, setPhysicalExam] = useState<PhysicalExamFields>({
+        ...createEmptyPhysicalExamFields(doctorSpecialist),
+    });
+    const { data, setData, post, processing, errors, transform } = useForm({
         patient_id: queue?.patient?.id || '',
         doctor_id: queue?.doctor?.id || '',
         queue_id: queue?.id || '',
@@ -35,7 +47,25 @@ export default function Create({ queue }: Props) {
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        transform((formData) => ({
+            ...formData,
+            physical_examination: buildPhysicalExamination(
+                physicalExam,
+                doctorSpecialist
+            ),
+        }));
+
         post(route('medical-records.store'));
+    };
+
+    const updatePhysicalExam = (
+        field: keyof PhysicalExamFields,
+        value: string
+    ) => {
+        setPhysicalExam((current) => ({
+            ...current,
+            [field]: value,
+        }));
     };
 
     return (
@@ -138,29 +168,12 @@ export default function Create({ queue }: Props) {
                         )}
                     </div>
 
-                    {/* Physical Examination */}
-                    <div className="mb-4">
-                        <label className="mb-1 block text-sm font-medium">
-                            Physical Examination
-                        </label>
-
-                        <textarea
-                            value={data.physical_examination}
-                            placeholder="Hasil pemeriksaan fisik"
-                            onChange={(e) =>
-                                setData(
-                                    'physical_examination',
-                                    e.target.value
-                                )
-                            }
-                            className="w-full rounded-lg border-gray-300"
-                        />
-                        {errors.physical_examination && (
-                            <p className="mt-1 text-sm text-red-500">
-                                {errors.physical_examination}
-                            </p>
-                        )}
-                    </div>
+                    <PhysicalExaminationForm
+                        value={physicalExam}
+                        onChange={updatePhysicalExam}
+                        specialist={doctorSpecialist}
+                        error={errors.physical_examination}
+                    />
 
                     {/* Diagnosis */}
                     <div className="mb-4">

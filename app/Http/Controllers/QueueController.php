@@ -97,18 +97,20 @@ class QueueController extends Controller
         $validated = $request->validate([
             'patient_id' => ['required', 'exists:patients,id'],
             'doctor_id' => ['required', 'exists:doctors,id'],
+            'queue_date' => ['required', 'date'],
         ]);
 
-        $latestQueue = Queue::latest()->first();
+        $queueCount = Queue::whereDate(
+            'queue_date',
+            $validated['queue_date']
+        )->count();
 
-        $number = 1;
-
-        if ($latestQueue) {
-            $number = $latestQueue->id + 1;
-        }
-
-        $queueNumber =
-            'A' . str_pad($number, 3, '0', STR_PAD_LEFT);
+        $queueNumber = 'A' . str_pad(
+            $queueCount + 1,
+            3,
+            '0',
+            STR_PAD_LEFT
+        );
 
         Queue::create([
             'patient_id' => $validated['patient_id'],
@@ -117,7 +119,7 @@ class QueueController extends Controller
 
             'queue_number' => $queueNumber,
 
-            'queue_date' => now(),
+            'queue_date' => $validated['queue_date'],
 
             'status' => 'waiting',
         ]);

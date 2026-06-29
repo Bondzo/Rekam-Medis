@@ -1,6 +1,7 @@
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { CheckCircle2, Clock3, Info, X, XCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 declare global {
     interface Window {
@@ -58,7 +59,28 @@ type Props = {
     midtransClientKey?: string | null;
 };
 
+type PaymentMessage = {
+    type: 'success' | 'pending' | 'error' | 'info';
+    title: string;
+    message: string;
+};
+
+const messageStyles: Record<PaymentMessage['type'], string> = {
+    success: 'border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-100',
+    pending: 'border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-100',
+    error: 'border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100',
+    info: 'border-zinc-300 bg-white text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100',
+};
+
+const messageIcons = {
+    success: CheckCircle2,
+    pending: Clock3,
+    error: XCircle,
+    info: Info,
+};
+
 export default function Show({ payment, midtransClientKey }: Props) {
+    const [paymentMessage, setPaymentMessage] = useState<PaymentMessage | null>(null);
     const isPaid = payment.status === 'paid';
     const canPayWithMidtrans =
         ['transfer', 'qris'].includes(payment.payment_method) &&
@@ -89,32 +111,68 @@ export default function Show({ payment, midtransClientKey }: Props) {
 
     const payWithMidtrans = () => {
         if (!payment.snap_token || !window.snap) {
-            alert('Midtrans Snap is not ready.');
+            setPaymentMessage({
+                type: 'info',
+                title: 'Midtrans Belum Siap',
+                message: 'Mohon tunggu sebentar lalu coba kembali.',
+            });
             return;
         }
 
         window.snap.pay(payment.snap_token, {
             onSuccess: () => {
+                setPaymentMessage({
+                    type: 'pending',
+                    title: 'Memproses Pembayaran',
+                    message: 'Pembayaran berhasil diterima. Status sedang diperbarui.',
+                });
+
                 router.put(
                     route('payments.mark-paid', payment.id),
                     {},
                     {
                         preserveScroll: true,
                         onSuccess: () => {
-                            alert('Pembayaran berhasil');
-                            router.visit(route('payments.success', payment.id));
+                            setPaymentMessage({
+                                type: 'success',
+                                title: 'Pembayaran Berhasil',
+                                message: 'Status pembayaran sudah selesai.',
+                            });
+
+                            window.setTimeout(() => {
+                                router.visit(route('payments.success', payment.id));
+                            }, 1500);
+                        },
+                        onError: () => {
+                            setPaymentMessage({
+                                type: 'error',
+                                title: 'Update Status Gagal',
+                                message: 'Pembayaran berhasil, tetapi status belum bisa diperbarui. Coba muat ulang halaman.',
+                            });
                         },
                     }
                 );
             },
             onPending: () => {
-                alert('Pembayaran masih pending');
+                setPaymentMessage({
+                    type: 'pending',
+                    title: 'Pembayaran Pending',
+                    message: 'Silakan selesaikan pembayaran Anda.',
+                });
             },
             onError: () => {
-                alert('Pembayaran gagal');
+                setPaymentMessage({
+                    type: 'error',
+                    title: 'Pembayaran Gagal',
+                    message: 'Terjadi kesalahan saat memproses pembayaran.',
+                });
             },
             onClose: () => {
-                alert('Pembayaran belum selesai');
+                setPaymentMessage({
+                    type: 'info',
+                    title: 'Pembayaran Belum Selesai',
+                    message: 'Popup pembayaran ditutup sebelum transaksi selesai.',
+                });
             },
         });
     };
@@ -126,8 +184,15 @@ export default function Show({ payment, midtransClientKey }: Props) {
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    alert('Pembayaran berhasil dikonfirmasi');
-                    router.visit(route('payments.success', payment.id));
+                    setPaymentMessage({
+                        type: 'success',
+                        title: 'Pembayaran Berhasil',
+                        message: 'Pembayaran tunai berhasil dikonfirmasi.',
+                    });
+
+                    window.setTimeout(() => {
+                        router.visit(route('payments.success', payment.id));
+                    }, 1200);
                 },
             }
         );
@@ -138,6 +203,13 @@ export default function Show({ payment, midtransClientKey }: Props) {
     return (
         <DashboardLayout>
             <Head title="Payment Detail" />
+
+            {paymentMessage && (
+                <PaymentNotification
+                    message={paymentMessage}
+                    onClose={() => setPaymentMessage(null)}
+                />
+            )}
 
             <div className="p-6">
                 <div className="mb-6 flex items-center justify-between">
@@ -299,5 +371,43 @@ export default function Show({ payment, midtransClientKey }: Props) {
                 </div>
             </div>
         </DashboardLayout>
+    );
+}
+
+function PaymentNotification({
+    message,
+    onClose,
+}: {
+    message: PaymentMessage;
+    onClose: () => void;
+}) {
+    const Icon = messageIcons[message.type];
+
+    return (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-zinc-950/30 px-4 backdrop-blur-sm">
+            <div
+                className={`w-full max-w-md border p-5 shadow-2xl ${messageStyles[message.type]}`}
+                role="status"
+                aria-live="polite"
+            >
+                <div className="flex items-start gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/70 dark:bg-white/10">
+                        <Icon className="h-6 w-6" strokeWidth={1.9} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <h2 className="text-base font-bold">{message.title}</h2>
+                        <p className="mt-1 text-sm opacity-85">{message.message}</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/60 text-current transition hover:bg-white/90 dark:bg-white/10 dark:hover:bg-white/20"
+                        aria-label="Tutup notifikasi"
+                    >
+                        <X className="h-4 w-4" strokeWidth={2} />
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 }

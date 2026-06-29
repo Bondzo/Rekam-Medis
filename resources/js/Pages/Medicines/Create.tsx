@@ -96,7 +96,6 @@ export default function Create() {
                                 onChange={(e) => setData('price', e.target.value)}
                                 className="w-full rounded-lg border-gray-300"
                             />
-                            <p className="mt-1 text-xs text-gray-500">Masukkan angka tanpa format Rupiah.</p>
                             {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price}</p>}
                         </div>
                     </div>
